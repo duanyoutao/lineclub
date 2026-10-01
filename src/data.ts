@@ -1,4 +1,5 @@
 import content from "../content/archives.json" with { type: "json" };
+import type { ReaderSection } from "./reader";
 
 export interface ArchiveRecord {
   id: string;
@@ -12,6 +13,8 @@ export interface ArchiveRecord {
   abstract: string;
   findings: string[];
   source: string;
+  /** Optional long-form chapters; only the reading stage renders these. */
+  sections?: ReaderSection[];
 }
 
 export const records: ArchiveRecord[] = content.records;

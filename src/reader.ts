@@ -1,6 +1,19 @@
+import { assetUrl } from "./asset-url";
 import { escapeHtml, richText } from "./html";
 import { fullMotion, type MotionPreferences } from "./motion-preferences";
 import "./reader.css";
+
+export interface ReaderFigure {
+  src: string;
+  caption?: string;
+}
+
+export interface ReaderSection {
+  heading: string;
+  paragraphs?: string[];
+  points?: string[];
+  figures?: ReaderFigure[];
+}
 
 /** The fields the reading stage needs; an ArchiveRecord satisfies this. */
 export interface ReadableRecord {
@@ -14,6 +27,7 @@ export interface ReadableRecord {
   clearance: string;
   abstract: string;
   findings: string[];
+  sections?: ReaderSection[];
 }
 
 const scales = [0.9, 1, 1.12, 1.28, 1.45, 1.65];
@@ -68,6 +82,18 @@ export class ReadingOverlay {
     this.body.addEventListener("scroll", () => this.progress());
     this.root.addEventListener("click", (event) => {
       if (this.closing) return;
+      // Outline entries scroll the reading column instead of the page.
+      const jump = (event.target as HTMLElement).closest<HTMLAnchorElement>(
+        'a[href^="#reader-s"]',
+      );
+      if (jump) {
+        event.preventDefault();
+        this.root.querySelector(jump.getAttribute("href")!)?.scrollIntoView({
+          block: "start",
+          behavior: this.motion.surfaceTransitions ? "smooth" : "auto",
+        });
+        return;
+      }
       const action = (event.target as HTMLElement).closest<HTMLElement>(
         "[data-reader]",
       )?.dataset.reader;
@@ -205,14 +231,42 @@ export class ReadingOverlay {
           `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`,
       )
       .join("");
-    this.root.querySelector("#reader-doc")!.innerHTML = `
+    const sections = record.sections ?? [];
+    const outline = sections.length
+      ? `<nav class="reader-outline" aria-label="文档目录"><div class="reader-label">CONTENTS / 目录</div><ol>${sections
+          .map(
+            (section, index) =>
+              `<li><a href="#reader-s${index + 1}"><span>${String(index + 1).padStart(2, "0")}</span>${escapeHtml(section.heading)}</a></li>`,
+          )
+          .join("")}</ol></nav>`
+      : "";
+    const chapters = sections
+      .map(
+        (section, index) => `<section class="reader-section reader-chapter" id="reader-s${index + 1}">
+        <h3><span>${String(index + 1).padStart(2, "0")}</span>${escapeHtml(section.heading)}</h3>
+        ${(section.paragraphs ?? []).map((paragraph) => `<p>${richText(paragraph)}</p>`).join("")}
+        ${
+          section.points?.length
+            ? `<ul class="reader-points">${section.points.map((point) => `<li>${richText(point)}</li>`).join("")}</ul>`
+            : ""
+        }
+        ${(section.figures ?? [])
+          .map(
+            (figure) =>
+              `<figure><img src="${assetUrl(figure.src)}" alt="${escapeHtml(figure.caption ?? section.heading)}" loading="lazy" decoding="async" />${figure.caption ? `<figcaption>${richText(figure.caption)}</figcaption>` : ""}</figure>`,
+          )
+          .join("")}
+      </section>`,
+      )
+      .join("");
+    this.root.querySelector("#reader-doc")!.innerHTML = `${outline}
       <section class="reader-section"><div class="reader-label">ABSTRACT / 摘要</div><p>${richText(record.abstract)}</p></section>
       <section class="reader-section"><div class="reader-label">RESEARCH NOTES / 研究记录</div><ol class="reader-notes">${record.findings
         .map(
           (finding, index) =>
             `<li><span>${String(index + 1).padStart(2, "0")}</span><p>${richText(finding)}</p></li>`,
         )
-        .join("")}</ol></section>`;
+        .join("")}</ol></section>${chapters}`;
   }
 
   private zoom(step: number) {

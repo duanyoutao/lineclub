@@ -210,6 +210,113 @@
   line-height: 1.95;
 }
 
+/* Long-form documents: outline, chapters, figures. */
+.reader-outline {
+  max-width: 780px;
+  margin: 30px auto 0;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--theme-line, #aaa59a);
+}
+
+.reader-outline ol {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  columns: 2;
+  column-gap: 34px;
+}
+
+.reader-outline a {
+  display: flex;
+  gap: 12px;
+  padding: 5px 0;
+  font-size: 13px;
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.reader-outline a:hover {
+  color: var(--theme-accent, #9b7247);
+  border-bottom-color: currentColor;
+}
+
+.reader-outline a span {
+  flex: none;
+  font-size: 10px;
+  line-height: 1.9;
+  color: var(--theme-accent, #9b7247);
+}
+
+.reader-outline + .reader-section {
+  margin-top: 34px;
+}
+
+.reader-chapter {
+  scroll-margin-top: 18px;
+}
+
+.reader-chapter h3 {
+  display: flex;
+  gap: 14px;
+  margin: 0;
+  padding-bottom: 14px;
+  font-size: calc(19px * var(--reader-scale));
+  font-weight: 600;
+  line-height: 1.5;
+  border-bottom: 1px solid var(--theme-line, #aaa59a);
+}
+
+.reader-chapter h3 span {
+  flex: none;
+  font-size: 11px;
+  line-height: 2.5;
+  color: var(--theme-accent, #9b7247);
+}
+
+.reader-points {
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reader-points li {
+  position: relative;
+  margin-top: 10px;
+  padding-left: 20px;
+  font-size: calc(15px * var(--reader-scale));
+  line-height: 1.95;
+}
+
+.reader-points li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.85em;
+  width: 6px;
+  height: 1px;
+  background: var(--theme-accent, #9b7247);
+}
+
+.reader-doc figure {
+  margin: 30px 0 0;
+}
+
+.reader-doc figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--theme-line, #aaa59a);
+  background: var(--theme-field, #e7e3d9);
+}
+
+.reader-doc figcaption {
+  margin-top: 10px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--theme-muted, #77756d);
+}
+
 .reader-footer {
   display: flex;
   align-items: center;

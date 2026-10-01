@@ -224,6 +224,8 @@
 :is([data-layout="compact"], [data-layout="portrait"]) .reader-body { padding: 0 var(--edge) 32px; }
 :is([data-layout="compact"], [data-layout="portrait"]) .reader-meta { margin: 22px auto 30px; padding-bottom: 22px; gap: 14px 20px; }
 :is([data-layout="compact"], [data-layout="portrait"]) .reader-doc p { text-align: left; }
+:is([data-layout="compact"], [data-layout="portrait"]) .reader-outline ol { columns: 1; }
+:is([data-layout="compact"], [data-layout="portrait"]) .reader-chapter h3 { font-size: calc(17px * var(--reader-scale)); }
 :is([data-layout="compact"], [data-layout="portrait"]) .reader-footer { padding: 12px var(--edge); }
 :is([data-layout="compact"], [data-layout="portrait"]) :is(.reader-back, .reader-zoom button, .read-full) { min-height: 44px; }
 :is([data-layout="compact"], [data-layout="portrait"]) .reader-back kbd { display: none; }

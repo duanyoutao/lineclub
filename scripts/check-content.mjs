@@ -91,6 +91,32 @@ const invalidCases = [
     /超链接须写成/,
   ],
   [
+    "missing figure file",
+    (c) => {
+      const record = c.records.find((r) => r.sections);
+      record.sections[0].figures[0].src = "media/does-not-exist.jpg";
+    },
+    /找不到文件/,
+  ],
+  [
+    "figure outside media",
+    (c) => {
+      const record = c.records.find((r) => r.sections);
+      record.sections[0].figures[0].src = "../../secrets.jpg";
+    },
+    /media\/ 目录/,
+  ],
+  [
+    "chapter without content",
+    (c) => {
+      const section = c.records.find((r) => r.sections).sections[0];
+      delete section.paragraphs;
+      delete section.points;
+      delete section.figures;
+    },
+    /每章至少要有/,
+  ],
+  [
     "null record",
     (c) => {
       c.records[0] = null;
@@ -190,4 +216,21 @@ test("only http and https targets become anchors", () => {
   assert.ok(unsafe.includes("javascript:alert(1)"));
   const injected = richText('[点我](https://a.test/"onmouseover="alert(1))');
   assert.ok(!injected.includes('"onmouseover="'));
+});
+test("chapters and figures carry into the downloadable text", () => {
+  const record = content.records.find((r) => r.sections);
+  assert.ok(record, "at least one archive has chapters");
+  const text = archiveText(record);
+  assert.equal((text.match(/【/g) ?? []).length, record.sections.length);
+  assert.ok(text.includes(`【${record.sections[0].heading}】`));
+  for (const section of record.sections)
+    for (const figure of section.figures ?? [])
+      assert.ok(text.includes(figure.src), `${figure.src} is listed in the text`);
+});
+test("records without chapters keep their previous download text", () => {
+  const plain = content.records.find((r) => !r.sections);
+  const text = archiveText(plain);
+  assert.ok(!text.includes("【"));
+  assert.ok(text.includes(`FILE ${plain.id} / ${plain.title}`));
+  assert.ok(text.endsWith("本文为基于公开设定的档案式改写，非游戏原文。\n"));
 });
