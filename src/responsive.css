@@ -216,3 +216,20 @@
   [data-layout="compact"] .system-nav [data-action="search"] { font-size: 0; gap: 0; }
   [data-layout="compact"] .viewer-help { max-width: 110px; }
 }
+
+/* Reading stage: same type scale control, tighter chrome. */
+:is([data-layout="compact"], [data-layout="portrait"]) .reader-header { padding: 16px var(--edge) 14px; }
+:is([data-layout="compact"], [data-layout="portrait"]) .reader-heading { margin-top: 14px; }
+:is([data-layout="compact"], [data-layout="portrait"]) .reader-heading h2 { font-size: 21px; }
+:is([data-layout="compact"], [data-layout="portrait"]) .reader-body { padding: 0 var(--edge) 32px; }
+:is([data-layout="compact"], [data-layout="portrait"]) .reader-meta { margin: 22px auto 30px; padding-bottom: 22px; gap: 14px 20px; }
+:is([data-layout="compact"], [data-layout="portrait"]) .reader-doc p { text-align: left; }
+:is([data-layout="compact"], [data-layout="portrait"]) .reader-footer { padding: 12px var(--edge); }
+:is([data-layout="compact"], [data-layout="portrait"]) :is(.reader-back, .reader-zoom button, .read-full) { min-height: 44px; }
+:is([data-layout="compact"], [data-layout="portrait"]) .reader-back kbd { display: none; }
+[data-layout="portrait"] .reader-hint { display: none; }
+[data-layout="portrait"] .reader-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-height: 440px) and (orientation: landscape) {
+  [data-layout="compact"] .reader-heading { margin-top: 8px; }
+  [data-layout="compact"] .reader-heading > span { display: none; }
+}

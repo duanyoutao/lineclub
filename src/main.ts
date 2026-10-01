@@ -17,6 +17,7 @@ import { initPwa, pwaSettingsMarkup } from "./pwa";
 import { createRollingNumber, createRollingText } from "@kitlangton/rolling-number";
 import { ArchiveScene } from "./scene";
 import { ModelViewer } from "./model-viewer";
+import { ReadingOverlay } from "./reader";
 import { ContentTransition, SurfaceTransition } from "./ui-transitions";
 import { BootSequence } from "./boot";
 import { loadBootWebfonts } from "./boot-lettering";
@@ -255,6 +256,7 @@ let threeState: "on" | "closing" | "off" | "loading" = "on";
 let resumeCell: { lane: number; row: number } | undefined;
 let resumeSelection = -1;
 let viewer: ModelViewer | undefined;
+let reader: ReadingOverlay | undefined;
 const accessLog: { id: string; time: string }[] = [];
 const columnMemory = archiveColumns.map((_, lane) => columnFiles(lane)[0]);
 function recordAccess() {
@@ -289,6 +291,7 @@ function savePrefs() {
   scene?.setQuality(effectiveRenderQuality());
   viewer?.setQuality(effectiveRenderQuality());
   viewer?.setMotion(prefs.motion);
+  reader?.setMotion(prefs.motion);
   syncQualityUI(prefs.rendering);
   updateQualitySummary();
   fileCounter.update({ animated: motionActive("rollingNumbers") && mode === "archive" });
@@ -539,6 +542,7 @@ function renderDetail() {
   <dl class="metadata"><div><dt>DEPARTMENT / 科室</dt><dd>${escapeHtml(r.department)}</dd></div><div><dt>COLLECTION / 编目范围</dt><dd>${escapeHtml(r.date)}</dd></div><div><dt>RELATED / 相关人物</dt><dd>${escapeHtml(r.lead)}</dd></div><div><dt>STATUS / 状态</dt><dd><i></i>${r.clearance === "RESTRICTED" ? "目录访问" : "已归档 · 可读取"}</dd></div></dl>
   <div class="detail-tabs" role="tablist"><button id="tab-overview" class="active" role="tab" aria-controls="tab-panel" aria-selected="true" data-tab="overview">01 <span>概述</span></button><button id="tab-notes" role="tab" aria-controls="tab-panel" aria-selected="false" data-tab="notes">02 <span>研究记录</span></button><button id="tab-history" role="tab" aria-controls="tab-panel" aria-selected="false" data-tab="history">03 <span>访问日志</span></button><i class="tab-indicator" aria-hidden="true"></i></div>
   <div id="tab-panel" class="tab-panel" role="tabpanel">${overview()}</div>
+  <button class="read-full" data-action="read-full">阅读全文 <span>↗</span></button>
   <div class="detail-actions"><button class="solid-button" data-action="bookmark">${saved.has(r.id) ? "− REMOVE FROM SAVED" : "＋ SAVE ARCHIVE"}<span>${saved.has(r.id) ? "已收藏" : "收藏档案"}</span></button><a class="export-button" href="${assetUrl(`archives/RHINE-LAB-${r.id}.txt`)}" download="RHINE-LAB-${r.id}.txt" aria-label="导出 ${r.id} 档案">EXPORT <span>↓</span></a></div>
   <div class="detail-footnote"><a href="${escapeHtml(r.source)}" target="_blank" rel="noopener">设定参考 ↗</a><span>${String(selected + 1).padStart(3, "0")} / ${String(records.length).padStart(3, "0")}</span></div>`;
   $("#detail-content").setAttribute("tabindex", "-1");
@@ -825,6 +829,17 @@ document.addEventListener("click", (e) => {
     );
     audio.play("page-open");
   }
+  if (action === "read-full" && mode === "detail") {
+    el.focus({ preventScroll: true });
+    reader ??= new ReadingOverlay($("#stage"), () => {
+      audio.setScene(mode);
+      audio.play("page-close");
+    });
+    reader.setMotion(prefs.motion);
+    scene?.finishDecryption();
+    reader.open(records[selected]);
+    audio.play("page-open");
+  }
   if (action === "back") {
     setMode("archive");
     audio.play("back");
@@ -860,7 +875,7 @@ document.addEventListener("click", (e) => {
 });
 document.addEventListener("keydown", (e) => {
   if (!started) return;
-  if (viewer?.isOpen) return;
+  if (viewer?.isOpen || reader?.isOpen) return;
   if (playground?.active && !modal) {
     if (e.key === "Escape") { e.preventDefault(); playground.stop(); }
     else if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Enter", "/"].includes(e.key) && !(e.target instanceof HTMLButtonElement)) e.preventDefault();
@@ -1017,7 +1032,7 @@ function frame(ms: number) {
       : undefined;
   wallpaperEffects?.update(time, motionIsReduced(), motionActive("pointerParallax"));
   // The calibrated 2D opening fully covers the scene until array entry.
-  if (!viewer?.isOpen && (!cinema || cinema.time >= 21.9)) scene?.update(time, cinema);
+  if (!viewer?.isOpen && !reader?.isOpen && (!cinema || cinema.time >= 21.9)) scene?.update(time, cinema);
   viewer?.update(time);
   if (threeState === "closing" && scene?.presentationHidden) releaseThree();
   playground?.position();
@@ -1027,7 +1042,7 @@ function frame(ms: number) {
     $("#detail-content").style.translate =
       `0 ${(1 - scene.detailVisibility) * 18}px`;
     $("#detail-content").inert = scene.detailVisibility < 0.1;
-    if (pendingDetailFocus && scene.detailVisibility >= 0.1 && !modal && !viewer?.isOpen) {
+    if (pendingDetailFocus && scene.detailVisibility >= 0.1 && !modal && !viewer?.isOpen && !reader?.isOpen) {
       $("#detail-content").focus({ preventScroll: true });
       pendingDetailFocus = false;
     }
@@ -1053,11 +1068,11 @@ function frame(ms: number) {
 function bindScene(scene: ArchiveScene, cell?: { lane: number; row: number }) {
     scene.select(selected, cell ? { cell } : undefined);
     scene.onSelect = (i, cell) => {
-      if (mode !== "archive" || modal || viewer?.isOpen) return;
+      if (mode !== "archive" || modal || viewer?.isOpen || reader?.isOpen) return;
       select(i, cell ? { cell } : undefined);
     };
     scene.onNavigate = (axis, direction) => {
-      if (mode !== "archive" || modal || viewer?.isOpen) return;
+      if (mode !== "archive" || modal || viewer?.isOpen || reader?.isOpen) return;
       if (axis === "lane") stepColumn(direction);
       else stepFile(direction);
     };
@@ -1096,6 +1111,7 @@ function releaseThree() {
   if (!scene) return;
   resumeCell = { ...scene.getStats().selectedCell }; resumeSelection = selected;
   viewer?.dispose(); viewer = undefined;
+  reader?.close();
   scene.dispose(); scene = undefined;
   if (mode === "detail") {
     $("#detail-content").style.opacity = "1";
