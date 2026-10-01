@@ -5,8 +5,9 @@ import {
   loadContent,
   validateContent,
   archiveText,
+  plainText,
 } from "./archive-content.mjs";
-import { escapeHtml, richText } from "../src/html.ts";
+import { escapeHtml, richBlocks, richText } from "../src/html.ts";
 
 const content = await loadContent();
 test("all downloads match the shared content, including the UTF-8 BOM", async () => {
@@ -115,6 +116,20 @@ const invalidCases = [
       delete section.figures;
     },
     /每章至少要有/,
+  ],
+  [
+    "unclosed backtick",
+    (c) => {
+      c.records[0].findings[0] = "这里的 ` 没有闭合。";
+    },
+    /反引号须成对/,
+  ],
+  [
+    "unclosed bold marker",
+    (c) => {
+      c.records[0].findings[0] = "**重点没有闭合。";
+    },
+    /\*\* 须成对/,
   ],
   [
     "null record",
@@ -233,4 +248,43 @@ test("records without chapters keep their previous download text", () => {
   assert.ok(!text.includes("【"));
   assert.ok(text.includes(`FILE ${plain.id} / ${plain.title}`));
   assert.ok(text.endsWith("本文为基于公开设定的档案式改写，非游戏原文。\n"));
+});
+test("inline markup renders, and escaping still wins over it", () => {
+  const html = richText("**重点** 与 *强调* 与 `console.log(1)`");
+  assert.ok(html.includes("<strong>重点</strong>"));
+  assert.ok(html.includes("<em>强调</em>"));
+  assert.ok(html.includes("<code>console.log(1)</code>"));
+  const hostile = richText("**<script>alert(1)</script>**");
+  assert.ok(!hostile.includes("<script>"));
+  assert.ok(hostile.includes("<strong>&lt;script&gt;"));
+});
+test("code spans keep markup literal", () => {
+  const html = richText("写作 `**加粗**` 即可");
+  assert.ok(html.includes("<code>**加粗**</code>"));
+  assert.ok(!html.includes("<strong>"));
+});
+test("a blank line starts a new paragraph", () => {
+  const blocks = richBlocks("第一段\n\n第二段");
+  assert.equal((blocks.match(/<p>/g) ?? []).length, 2);
+  assert.ok(blocks.includes("<p>第一段</p>"));
+  assert.ok(blocks.includes("<p>第二段</p>"));
+  assert.equal((richBlocks("第一行\n第二行").match(/<p>/g) ?? []).length, 1);
+  assert.ok(richBlocks("第一行\n第二行").includes("<br />"));
+});
+test("markup is unwrapped in the downloadable text", () => {
+  const sample = "**重点**与 `代码`，见 [文档](https://example.test/doc)。";
+  assert.equal(
+    plainText(sample),
+    "重点与 代码，见 文档 (https://example.test/doc)。",
+  );
+  assert.ok(
+    archiveText({ ...content.records[0], findings: [sample] }).includes(
+      "重点与 代码，见 文档 (https://example.test/doc)。",
+    ),
+  );
+});
+test("text without markup renders exactly as before", () => {
+  const plain = content.records.find((r) => !r.sections).abstract;
+  assert.equal(richText(plain), escapeHtml(plain));
+  assert.equal(plainText(plain), plain);
 });

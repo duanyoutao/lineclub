@@ -22,7 +22,7 @@ const isText = (value) => typeof value === "string" && value.trim().length > 0;
  * pattern is duplicated rather than imported; check-content.mjs keeps the two in
  * step by exercising both renderers on the same sample.
  */
-const linkMarkup = /\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g;
+const linkMarkup = /\[([^\]\n]+)\]\((https?:\/\/[^\s)*`]+)\)/g;
 // The array addresses documents as lane * 32 + row with rows starting at 12, so
 // a column holds at most 20 documents before two of them claim the same slot.
 const maxPerColumn = 20;
@@ -33,8 +33,8 @@ const figurePattern =
   /^media\/[A-Za-z0-9][A-Za-z0-9._-]*\.(?:jpg|jpeg|png|gif|webp)$/;
 const publicDir = fileURLToPath(new URL("../public/", import.meta.url));
 
-/** Reports link markup that the renderer would otherwise show as literal text. */
-function linkErrors(value, label, errors) {
+/** Reports markup the renderer would otherwise show as literal text. */
+function markupErrors(value, label, errors) {
   if (typeof value !== "string") return;
   if (
     (value.match(/\]\(/g) ?? []).length !== (value.match(linkMarkup) ?? []).length
@@ -42,6 +42,12 @@ function linkErrors(value, label, errors) {
     errors.push(
       `${label}：超链接须写成 [文字](https://…) 形式，暂不支持其他链接写法`,
     );
+  }
+  if ((value.match(/`/g) ?? []).length % 2 !== 0) {
+    errors.push(`${label}：反引号须成对出现，例如 \`代码\``);
+  }
+  if ((value.match(/\*\*/g) ?? []).length % 2 !== 0) {
+    errors.push(`${label}：** 须成对出现，例如 **加粗**`);
   }
 }
 
@@ -71,7 +77,7 @@ function validateSections(sections, label, errors) {
       }
       filled++;
       list.forEach((item, itemIndex) =>
-        linkErrors(item, `${at}.${key}[${itemIndex}]`, errors),
+        markupErrors(item, `${at}.${key}[${itemIndex}]`, errors),
       );
     }
     if (section.figures !== undefined) {
@@ -94,6 +100,8 @@ function validateSections(sections, label, errors) {
           }
           if (figure.caption !== undefined && !isText(figure.caption)) {
             errors.push(`${where}.caption：填写时必须是非空文本`);
+          } else if (typeof figure.caption === "string") {
+            markupErrors(figure.caption, `${where}.caption`, errors);
           }
         });
       }
@@ -154,7 +162,7 @@ export function validateContent(content) {
     }
     if (Array.isArray(record.findings)) {
       record.findings.forEach((finding, findingIndex) =>
-        linkErrors(finding, `${label}.findings[${findingIndex}]`, errors),
+        markupErrors(finding, `${label}.findings[${findingIndex}]`, errors),
       );
     }
     try {
@@ -191,9 +199,14 @@ export async function loadContent() {
   );
 }
 
-/** Downloadable files are plain text, so a link keeps its target visible. */
+/** Downloadable files are plain text, so markup is unwrapped and links keep
+ *  their target visible. */
 export function plainText(value) {
-  return value.replace(linkMarkup, (_, label, url) => `${label} (${url})`);
+  return value
+    .replace(/`([^`\n]+)`/g, "$1")
+    .replace(/\*\*([^*\n]+)\*\*/g, "$1")
+    .replace(/\*([^*\n]+)\*/g, "$1")
+    .replace(linkMarkup, (_, label, url) => `${label} (${url})`);
 }
 
 /** One chapter as downloadable plain text; figures keep their path visible. */

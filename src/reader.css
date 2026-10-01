@@ -317,6 +317,24 @@
   color: var(--theme-muted, #77756d);
 }
 
+/* Inline markup shared by the reading stage and the detail panel. */
+:is(.reader-doc, .tab-panel) strong {
+  font-weight: 600;
+}
+
+:is(.reader-doc, .tab-panel) em {
+  font-style: italic;
+}
+
+:is(.reader-doc, .tab-panel) code {
+  padding: 1px 5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  background: var(--theme-field, #e7e3d9);
+  border: 1px solid var(--theme-line, #aaa59a);
+  border-radius: 3px;
+}
+
 .reader-footer {
   display: flex;
   align-items: center;

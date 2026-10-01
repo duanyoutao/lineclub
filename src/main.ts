@@ -551,7 +551,7 @@ function renderDetail() {
   setTab(activeTab, false);
 }
 function overview() {
-  return `<div class="panel-label">ABSTRACT / 摘要</div><p>${escapeHtml(records[selected].abstract)}</p>`;
+  return `<div class="panel-label">ABSTRACT / 摘要</div><p>${richText(records[selected].abstract)}</p>`;
 }
 function setTab(tab: string, sound = true) {
   if (sound && tab === activeTab) return;

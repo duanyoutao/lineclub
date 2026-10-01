@@ -1,5 +1,5 @@
 import { assetUrl } from "./asset-url";
-import { escapeHtml, richText } from "./html";
+import { escapeHtml, richBlocks, richText } from "./html";
 import { fullMotion, type MotionPreferences } from "./motion-preferences";
 import "./reader.css";
 
@@ -244,7 +244,7 @@ export class ReadingOverlay {
       .map(
         (section, index) => `<section class="reader-section reader-chapter" id="reader-s${index + 1}">
         <h3><span>${String(index + 1).padStart(2, "0")}</span>${escapeHtml(section.heading)}</h3>
-        ${(section.paragraphs ?? []).map((paragraph) => `<p>${richText(paragraph)}</p>`).join("")}
+        ${(section.paragraphs ?? []).map((paragraph) => richBlocks(paragraph)).join("")}
         ${
           section.points?.length
             ? `<ul class="reader-points">${section.points.map((point) => `<li>${richText(point)}</li>`).join("")}</ul>`
@@ -260,7 +260,7 @@ export class ReadingOverlay {
       )
       .join("");
     this.root.querySelector("#reader-doc")!.innerHTML = `${outline}
-      <section class="reader-section"><div class="reader-label">ABSTRACT / 摘要</div><p>${richText(record.abstract)}</p></section>
+      <section class="reader-section"><div class="reader-label">ABSTRACT / 摘要</div>${richBlocks(record.abstract)}</section>
       <section class="reader-section"><div class="reader-label">RESEARCH NOTES / 研究记录</div><ol class="reader-notes">${record.findings
         .map(
           (finding, index) =>
