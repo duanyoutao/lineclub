@@ -698,6 +698,23 @@
         "面向开发者的用量与计费入口集中在 [API 平台用量页面](https://platform.deepseek.com/usage)，可查看调用额度与消耗记录。"
       ],
       "source": "https://www.deepseek.com/"
+    },
+    {
+      "id": "X-042",
+      "title": "GitHub",
+      "en": "GITHUB",
+      "department": "智能系统科",
+      "category": "机构档案",
+      "date": "2008–2026 公开资料",
+      "lead": "Tom Preston-Werner / Chris Wanstrath / PJ Hyett",
+      "clearance": "REFERENCE AREA",
+      "abstract": "GitHub 于 2008 年上线，由 Tom Preston-Werner、Chris Wanstrath 与 PJ Hyett 创办，最初把 Git 的分布式版本控制搬到浏览器里。此后它成为开放源代码最主要的集散地：代码托管、Pull Request 评审、Issue 讨论与自动化构建集中在同一处，协作方式也随之固定为今天的惯例。2018 年 GitHub 被微软收购，2025 年其组织归属并入微软的 CoreAI 部门。",
+      "findings": [
+        "把版本历史、评审意见与问题讨论放在同一份仓库记录里，使协作过程本身可被检索和追溯。",
+        "Pull Request 把改动变成可讨论、可回退的单元，这一形式后来被大量代码托管平台沿用。",
+        "公开仓库的总入口在 [GitHub 首页](https://github.com/)，可按语言、主题与许可条件检索项目。"
+      ],
+      "source": "https://github.com/"
     }
   ]
 }
