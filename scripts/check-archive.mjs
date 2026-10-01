@@ -17,11 +17,13 @@ import {
   damp,
 } from "../src/motion.ts";
 
-assert.equal(records.length, 40);
 const slots = new Set();
 for (let lane = 0; lane < archiveColumns.length; lane++) {
   const files = columnFiles(lane);
-  assert.equal(files.length, 8, "Every column has eight readable files");
+  assert.ok(
+    files.length >= 1 && files.length <= 20,
+    "Every column holds between one and twenty readable files",
+  );
   for (const index of files) {
     const location = fileLocation(index);
     assert.equal(location.lane, lane);
@@ -34,7 +36,11 @@ for (let lane = 0; lane < archiveColumns.length; lane++) {
     assert.ok(new URL(record.source).protocol === "https:");
   }
 }
-assert.equal(slots.size, 40, "No two documents occupy the same slot");
+assert.equal(
+  slots.size,
+  records.length,
+  "No two documents occupy the same slot",
+);
 const crests = Array.from({ length: 5 }, (_, lane) =>
   Math.max(
     ...Array.from({ length: 32 }, (_, row) => cinematicField(row, lane, 25.4)),
@@ -96,7 +102,7 @@ console.log(
   JSON.stringify(
     {
       documents: records.length,
-      perColumn: 8,
+      perColumn: archiveColumns.map((_, lane) => columnFiles(lane).length),
       crestsAt760: crests,
       maxFrameDelta: maxDelta,
       modelHeight: height,

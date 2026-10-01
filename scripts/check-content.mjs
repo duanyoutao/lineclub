@@ -6,10 +6,10 @@ import {
   validateContent,
   archiveText,
 } from "./archive-content.mjs";
-import { escapeHtml } from "../src/html.ts";
+import { escapeHtml, richText } from "../src/html.ts";
 
 const content = await loadContent();
-test("all forty downloads match the shared content, including the UTF-8 BOM", async () => {
+test("all downloads match the shared content, including the UTF-8 BOM", async () => {
   for (const record of content.records) {
     assert.equal(
       (
@@ -63,18 +63,32 @@ const invalidCases = [
     /未知分类/,
   ],
   [
-    "unbalanced columns",
+    "empty column",
     (c) => {
-      c.records[0].category = c.columns[0];
+      c.records.forEach((record) => {
+        if (record.category === c.columns[0]) record.category = c.columns[1];
+      });
     },
-    /八份档案/,
+    /1 至 20 份档案/,
   ],
   [
-    "missing record",
+    "overfull column",
     (c) => {
-      c.records.pop();
+      const source = c.records.find((r) => r.category === c.columns[0]);
+      for (let i = 0; i < 13; i++)
+        c.records.push({
+          ...source,
+          id: `X-${String(c.records.length + 1).padStart(3, "0")}`,
+        });
     },
-    /四十份档案/,
+    /1 至 20 份档案/,
+  ],
+  [
+    "unsafe findings link",
+    (c) => {
+      c.records[0].findings[0] = "入口见 [用量页](javascript:alert(1))。";
+    },
+    /超链接须写成/,
   ],
   [
     "null record",
@@ -155,4 +169,25 @@ test("plain-text punctuation stays literal in HTML and downloadable text", () =>
     "&lt;玻璃&gt; &amp; &quot;实验&quot; &#39;A&#39;",
   );
   assert.ok(archiveText(edited.records[0]).includes(title));
+});
+test("findings links render as links in the page and stay readable in downloads", () => {
+  const sample =
+    "用量与计费入口见 [API 平台用量](https://platform.deepseek.com/usage)。";
+  assert.ok(
+    richText(sample).includes(
+      '<a href="https://platform.deepseek.com/usage" target="_blank" rel="noopener">API 平台用量</a>',
+    ),
+  );
+  assert.ok(
+    archiveText({ ...content.records[0], findings: [sample] }).includes(
+      "API 平台用量 (https://platform.deepseek.com/usage)",
+    ),
+  );
+});
+test("only http and https targets become anchors", () => {
+  const unsafe = richText("[点我](javascript:alert(1))");
+  assert.ok(!unsafe.includes("<a "));
+  assert.ok(unsafe.includes("javascript:alert(1)"));
+  const injected = richText('[点我](https://a.test/"onmouseover="alert(1))');
+  assert.ok(!injected.includes('"onmouseover="'));
 });

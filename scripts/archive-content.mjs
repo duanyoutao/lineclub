@@ -13,6 +13,16 @@ const requiredFields = [
   "source",
 ];
 const isText = (value) => typeof value === "string" && value.trim().length > 0;
+/**
+ * Mirrors LINK_MARKUP in src/html.ts, which renders the same markup as links in
+ * the page. This module stays importable without Node's type stripping, so the
+ * pattern is duplicated rather than imported; check-content.mjs keeps the two in
+ * step by exercising both renderers on the same sample.
+ */
+const linkMarkup = /\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g;
+// The array addresses documents as lane * 32 + row with rows starting at 12, so
+// a column holds at most 20 documents before two of them claim the same slot.
+const maxPerColumn = 20;
 
 export function validateContent(content) {
   const errors = [];
@@ -38,7 +48,6 @@ export function validateContent(content) {
     errors.push("categories 与 columns 必须包含相同的五个分类（顺序可以不同）");
   }
   const records = Array.isArray(content.records) ? content.records : [];
-  if (records.length !== 40) errors.push("records：当前阵列要求四十份档案");
   const ids = new Set();
   records.forEach((record, index) => {
     const label = `records[${index}]`;
@@ -63,6 +72,19 @@ export function validateContent(content) {
     ) {
       errors.push(`${label}.findings：必须包含至少一条非空研究记录`);
     }
+    if (Array.isArray(record.findings)) {
+      for (const finding of record.findings) {
+        if (typeof finding !== "string") continue;
+        if (
+          (finding.match(/\]\(/g) ?? []).length !==
+          (finding.match(linkMarkup) ?? []).length
+        ) {
+          errors.push(
+            `${label}.findings：超链接须写成 [文字](https://…) 形式，暂不支持其他链接写法`,
+          );
+        }
+      }
+    }
     try {
       const url = new URL(record.source);
       if (!["https:", "http:"].includes(url.protocol)) throw new Error();
@@ -71,8 +93,11 @@ export function validateContent(content) {
     }
   });
   for (const name of columns) {
-    if (records.filter((record) => record?.category === name).length !== 8) {
-      errors.push(`分类“${name}”：当前阵列要求八份档案`);
+    const count = records.filter((record) => record?.category === name).length;
+    if (count < 1 || count > maxPerColumn) {
+      errors.push(
+        `分类“${name}”：当前阵列要求 1 至 ${maxPerColumn} 份档案，现有 ${count} 份`,
+      );
     }
   }
   if (errors.length)
@@ -91,6 +116,11 @@ export async function loadContent() {
   );
 }
 
+/** Downloadable files are plain text, so a link keeps its target visible. */
+export function plainText(value) {
+  return value.replace(linkMarkup, (_, label, url) => `${label} (${url})`);
+}
+
 export function archiveText(r) {
-  return `\uFEFFRHINE LAB · INTERNAL DATABASE\nFILE ${r.id} / ${r.title}\n${r.en}\n\n科室：${r.department}\n编目范围：${r.date}\n相关人物：${r.lead}\n访问范围：${r.clearance}\n\n${r.abstract}\n\n研究记录\n${r.findings.map((f, i) => `${i + 1}. ${f}`).join("\n")}\n\n设定参考：${r.source}\n本文为基于公开设定的档案式改写，非游戏原文。\n`;
+  return `\uFEFFRHINE LAB · INTERNAL DATABASE\nFILE ${r.id} / ${r.title}\n${r.en}\n\n科室：${r.department}\n编目范围：${r.date}\n相关人物：${r.lead}\n访问范围：${r.clearance}\n\n${r.abstract}\n\n研究记录\n${r.findings.map((f, i) => `${i + 1}. ${plainText(f)}`).join("\n")}\n\n设定参考：${r.source}\n本文为基于公开设定的档案式改写，非游戏原文。\n`;
 }
