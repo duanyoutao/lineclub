@@ -12,20 +12,7 @@ import {
   resizeQuality,
 } from "./quality-renderer";
 import { fullMotion, type MotionPreferences } from "./motion-preferences";
-
-const PARTS = [
-  { id: "fasteners", label: "紧固件", en: "FASTENERS", depth: 2.75 },
-  { id: "cover", label: "透明盖板", en: "OPTICAL COVER", depth: 1.85 },
-  {
-    id: "optical-lenses",
-    label: "折射环组",
-    en: "REFRACTIVE RINGS",
-    depth: 0.75,
-  },
-  { id: "optical-core", label: "光学核心", en: "OPTICAL CORE", depth: -0.15 },
-  { id: "substrate", label: "信息基板", en: "SUBSTRATE", depth: -1.1 },
-  { id: "carrier", label: "背板与框架", en: "CARRIER", depth: -2.05 },
-] as const;
+import { PARTS } from "./viewer-parts";
 
 type ModelSource = { model: THREE.Group; dispose: () => void; setClarity?: (value: number) => void };
 export class ModelViewer {
@@ -81,6 +68,14 @@ export class ModelViewer {
   private onClose: () => void;
   private provider?: () => Promise<ModelSource>;
   isOpen = false;
+  // Part inspection: no selection keeps the whole-object orbit.
+  private selected?: string;
+  private readonly partCenter = new THREE.Vector3();
+  private readonly partBox = new THREE.Box3();
+  private readonly pointerAt = new THREE.Vector2();
+  private raycaster = new THREE.Raycaster();
+  private pressAt?: { x: number; y: number };
+  private pickCycle?: { x: number; y: number; order: string[]; index: number };
 
   constructor(
     parent: HTMLElement,
@@ -105,7 +100,7 @@ export class ModelViewer {
         <span class="viewer-index">360<span>°</span></span>
       </header>
       <div class="viewer-surface" role="group" aria-label="玻璃模式"><button data-viewer="clear" aria-pressed="true">清晰</button><button data-viewer="frosted" aria-pressed="false">磨砂</button></div>
-      <aside class="viewer-parts" aria-label="模型装配结构"><div>ASSEMBLY / 装配结构</div>${PARTS.map((p, i) => `<p><span>${String(i + 1).padStart(2, "0")}</span><strong>${p.label}</strong><small>${p.en}</small></p>`).join("")}</aside>
+      <aside class="viewer-parts" aria-label="模型装配结构"><div>ASSEMBLY / 装配结构</div>${PARTS.map((p, i) => `<p data-part="${p.id}" role="button" tabindex="0" aria-pressed="false" title="单独查看：${p.label}"><span>${String(i + 1).padStart(2, "0")}</span><strong>${p.label}</strong><small>${p.en}</small></p>`).join("")}</aside>
       <div class="viewer-loading" role="status"><span>正在载入模型…</span><button data-viewer="retry" hidden>重新载入 ↗</button></div>
       <footer class="viewer-footer">
         <div class="viewer-help"><span>拖动旋转</span><span>↑ ↓ ← → 平移</span><span>滚轮缩放</span></div>
@@ -160,6 +155,13 @@ export class ModelViewer {
     this.controls.addEventListener("start", () => this.interruptReset());
     this.root.addEventListener("click", (event) => {
       if (this.closing) return;
+      const part = (event.target as HTMLElement).closest<HTMLElement>(
+        "[data-part]",
+      )?.dataset.part;
+      if (part) {
+        this.selectPart(part);
+        return;
+      }
       const action = (event.target as HTMLElement).closest<HTMLElement>(
         "[data-viewer]",
       )?.dataset.viewer;
@@ -184,6 +186,34 @@ export class ModelViewer {
       }
     });
     this.root.addEventListener("keydown", (event) => this.keydown(event));
+    // Picking is a deliberate tap on the model; a drag belongs to OrbitControls.
+    const canvas = this.renderer.domElement;
+    canvas.addEventListener("pointerdown", (event) => {
+      this.pressAt = { x: event.clientX, y: event.clientY };
+    });
+    canvas.addEventListener("pointerup", (event) => {
+      const press = this.pressAt;
+      this.pressAt = undefined;
+      if (!press || this.closing || this.loading || !this.source) return;
+      if (Math.hypot(event.clientX - press.x, event.clientY - press.y) > 6) {
+        this.pickCycle = undefined;
+        return;
+      }
+      const order = this.partsUnderPointer(event);
+      if (!order.length) {
+        this.pickCycle = undefined;
+        if (this.selected) this.selectPart(undefined);
+        return;
+      }
+      // Layers overlap on screen (the cover spans the whole face), so repeated
+      // taps in the same spot step deeper instead of always taking the nearest.
+      const repeat =
+        this.pickCycle &&
+        Math.hypot(event.clientX - this.pickCycle.x, event.clientY - this.pickCycle.y) < 10;
+      const index = repeat ? (this.pickCycle!.index + 1) % order.length : 0;
+      this.pickCycle = { x: event.clientX, y: event.clientY, order, index };
+      this.selectPart(order[index], true);
+    });
   }
 
   setMotion(value: MotionPreferences) {
@@ -266,6 +296,7 @@ export class ModelViewer {
       for (const part of PARTS) {
         const group = new THREE.Group();
         group.name = part.id;
+        group.userData.partId = part.id;
         this.groups.set(part.id, group);
       }
       for (const child of [...source.model.children]) {
@@ -394,6 +425,9 @@ export class ModelViewer {
     // Keep rendering and retain modal focus until the visible exit completes.
     this.isOpen = false;
     this.closing = false;
+    this.selected = undefined;
+    this.controls.minDistance = 5;
+    this.pickCycle = undefined;
     this.root.hidden = true;
     this.root.dataset.transition = "closed";
     this.modelTransition?.cancel();
@@ -419,6 +453,66 @@ export class ModelViewer {
       )!.disabled = disabled;
     }
   }
+  /** Orbit around one assembly part; with no part the whole object stays framed. */
+  selectPart(id?: string, fromPick = false) {
+    const next = !fromPick && id === this.selected ? undefined : id;
+    this.interruptReset();
+    if (!next || !this.groups.has(next)) {
+      this.selected = undefined;
+      this.controls.minDistance = 5;
+      this.controls.target.set(0, 0, 0);
+      this.syncParts();
+      this.setStatus(
+        this.targetSpread ? "已拆解" : this.spread.value > 0.001 ? "正在重组" : "已组装",
+      );
+      return;
+    }
+    this.selected = next;
+    const box = this.partBox.setFromObject(this.groups.get(next)!);
+    box.getCenter(this.partCenter);
+    this.controls.target.copy(this.partCenter);
+    // Open the dolly limit, then keep the viewing direction and move in so the
+    // part fills the frame. CameraMotion smooths both the pan and the approach.
+    this.controls.minDistance = 1.2;
+    const radius = Math.max(box.getBoundingSphere(new THREE.Sphere()).radius, 0.2);
+    const distance = THREE.MathUtils.clamp(radius * 4.2, 1.8, 14);
+    const direction = this.controlCamera.position.clone().sub(this.controls.target);
+    if (direction.lengthSq() < 1e-6) direction.set(0.3, 0.25, 1);
+    direction.normalize();
+    this.controlCamera.position
+      .copy(this.controls.target)
+      .addScaledVector(direction, distance);
+    this.controls.update();
+    this.syncParts();
+    this.setStatus(`已选中 · ${PARTS.find((part) => part.id === next)!.label}`);
+  }
+  private syncParts() {
+    for (const node of this.root.querySelectorAll<HTMLElement>("[data-part]")) {
+      const on = node.dataset.part === this.selected;
+      node.classList.toggle("active", on);
+      node.setAttribute("aria-pressed", String(on));
+    }
+  }
+  /** Assembly parts under the pointer, nearest first and de-duplicated. */
+  private partsUnderPointer(event: PointerEvent) {
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    this.pointerAt.set(
+      ((event.clientX - rect.left) / rect.width) * 2 - 1,
+      -((event.clientY - rect.top) / rect.height) * 2 + 1,
+    );
+    this.raycaster.setFromCamera(this.pointerAt, this.camera);
+    const order: string[] = [];
+    for (const hit of this.raycaster.intersectObjects(
+      [...this.groups.values()],
+      true,
+    )) {
+      let node: THREE.Object3D | null = hit.object;
+      while (node && !node.userData.partId) node = node.parent;
+      const id = node?.userData.partId as string | undefined;
+      if (id && !order.includes(id)) order.push(id);
+    }
+    return order;
+  }
   private setSurface(clear: boolean) {
     this.targetClarity = clear ? 1 : 0;
     this.root.dataset.surface = clear ? "clear" : "frosted";
@@ -435,6 +529,10 @@ export class ModelViewer {
     this.root
       .querySelector('[data-viewer="assemble"]')!
       .setAttribute("aria-pressed", String(!value));
+    // The part list is only meaningful — and clickable — while the stack is apart.
+    this.root.querySelector<HTMLElement>(".viewer-parts")!.inert = !value;
+    // Reassembling returns to the whole-object view.
+    if (!value && this.selected) this.selectPart(undefined);
     this.setStatus(
       value ? "正在拆解" : this.spread.value > 0.001 ? "正在重组" : "已组装",
     );
@@ -447,6 +545,12 @@ export class ModelViewer {
     }
   }
   private resetView(animated = true) {
+    if (this.selected) {
+      this.selected = undefined;
+      this.controls.minDistance = 5;
+      this.syncParts();
+      this.setStatus(this.targetSpread ? "已拆解" : "已组装");
+    }
     this.controls.enabled = false;
     this.controls.enableDamping = false;
     this.controls.update();
@@ -468,7 +572,9 @@ export class ModelViewer {
     event.stopPropagation();
     if (event.key === "Escape") {
       event.preventDefault();
-      this.close();
+      // First Escape drops the part selection, a second one leaves the viewer.
+      if (this.selected) this.selectPart(undefined);
+      else this.close();
       return;
     }
     if (this.closing) {
@@ -478,7 +584,7 @@ export class ModelViewer {
     if (event.key === "Tab") {
       const elements = [
         ...this.root.querySelectorAll<HTMLElement>(
-          'button:not([disabled]):not([hidden]),canvas[tabindex="0"]',
+          'button:not([disabled]):not([hidden]),canvas[tabindex="0"],[data-part]',
         ),
       ];
       const first = elements[0],
@@ -494,6 +600,12 @@ export class ModelViewer {
       return;
     }
     if (!this.source || this.loading) return;
+    const focusedPart = (event.target as HTMLElement).dataset?.part;
+    if (focusedPart && (event.key === "Enter" || event.key === " ")) {
+      event.preventDefault();
+      this.selectPart(focusedPart);
+      return;
+    }
     if (event.key === "Home") {
       event.preventDefault();
       this.resetView();
@@ -602,6 +714,18 @@ export class ModelViewer {
       for (const part of PARTS) {
         this.groups.get(part.id)!.position.z = part.depth * this.spread.value;
       }
+      // While the stack is still moving, keep the inspected part centred so the
+      // orbit does not drift off it during 拆解 / 重组.
+      if (
+        this.selected &&
+        Math.abs(this.spread.value - this.targetSpread) > 0.001
+      ) {
+        this.controls.target.copy(
+          this.partBox
+            .setFromObject(this.groups.get(this.selected)!)
+            .getCenter(this.partCenter),
+        );
+      }
     }
     this.controls.update();
     this.cameraMotion.update(
@@ -640,6 +764,7 @@ export class ModelViewer {
       ),
       cameraPosition: this.camera.position.toArray(),
       resetting: this.cameraMotion.resetting,
+      selected: this.selected ?? null,
       azimuth: this.controls.getAzimuthalAngle(),
       polar: this.controls.getPolarAngle(),
       parts: [...this.groups].map(([id, group]) => ({

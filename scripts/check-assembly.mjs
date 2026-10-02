@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { damp } from "../src/motion.ts";
+import { PARTS } from "../src/viewer-parts.ts";
 async function load(name) {
   const b = await readFile(
     new URL("../public/assets/" + name, import.meta.url),
@@ -19,6 +20,18 @@ const [original, assembly] = await Promise.all([
   load("archive-assembly.glb"),
 ]);
 const parts = new Map();
+// The viewer reads assemblyPart off the top-level nodes and walks up from a hit,
+// so that is the contract. A glTF exporter may split a multi-material object into
+// several primitives (Blender 5.2 splits Titanium_Fasteners), and those child
+// meshes carry no tag of their own.
+for (const node of assembly.children)
+  assert.ok(
+    node.userData.assemblyPart,
+    `Top-level node ${node.name} must carry assemblyPart`,
+  );
+const topLevelParts = new Set(
+  assembly.children.map((node) => node.userData.assemblyPart),
+);
 const vertices = (scene, collect = false) => {
   const points = new Map();
   scene.updateMatrixWorld(true);
@@ -27,13 +40,12 @@ const vertices = (scene, collect = false) => {
     const surface = mesh.material.name.replace(/\.\d+$/, "");
     if (surface === "Carbon_Ink") return;
     if (collect) {
-      assert.ok(
-        mesh.userData.assemblyPart,
-        "Every mesh belongs to a physical assembly",
-      );
+      let owner = mesh;
+      while (owner && !owner.userData.assemblyPart) owner = owner.parent;
+      assert.ok(owner, "Every mesh belongs to a physical assembly");
       parts.set(
-        mesh.userData.assemblyPart,
-        (parts.get(mesh.userData.assemblyPart) || 0) + 1,
+        owner.userData.assemblyPart,
+        (parts.get(owner.userData.assemblyPart) || 0) + 1,
       );
     }
     const position = mesh.geometry.attributes.position;
@@ -48,14 +60,38 @@ const vertices = (scene, collect = false) => {
 };
 const a = vertices(original),
   b = vertices(assembly, true);
-assert.deepEqual([...parts.keys()].sort(), [
+const expectedParts = [
   "carrier",
   "cover",
   "fasteners",
   "optical-core",
   "optical-lenses",
   "substrate",
-]);
+];
+assert.deepEqual(
+  [...parts.keys()].sort(),
+  expectedParts,
+  "The assembly asset must expose exactly the six physical groups",
+);
+assert.deepEqual(
+  [...topLevelParts].sort(),
+  expectedParts,
+  "Every group must have at least one top-level node, or the viewer builds an empty group",
+);
+// The viewer groups meshes and targets part selection by these ids, so the code
+// and the baked asset have to agree; renaming either side breaks selection.
+assert.deepEqual(
+  PARTS.map((part) => part.id).sort(),
+  expectedParts,
+  "PARTS in src/viewer-parts.ts must match the ids in the assembly asset",
+);
+for (const part of PARTS)
+  assert.ok(parts.get(part.id), `Part ${part.id} has no mesh in the assembly`);
+assert.equal(
+  new Set(PARTS.map((part) => part.depth)).size,
+  PARTS.length,
+  "Exploded depths must be distinct so the layers separate",
+);
 // Compare actual distances: rounding to a fixed grid can split equivalent
 // float32 coordinates on either side of a rounding boundary after Blender joins.
 function maxVertexError(from, to) {

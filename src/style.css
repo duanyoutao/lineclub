@@ -2019,6 +2019,33 @@ button {
   margin-top: 6px;
   color: #827b6c;
 }
+/* Each row picks that assembly part and orbits the camera around it. */
+.viewer-parts [data-part] {
+  pointer-events: auto;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
+}
+.viewer-parts [data-part]:hover {
+  border-bottom-color: #a27849;
+}
+.viewer-parts [data-part]:hover strong {
+  color: #946b3c;
+}
+.viewer-parts [data-part].active {
+  border-bottom-color: #24261f;
+}
+.viewer-parts [data-part].active strong {
+  color: #24261f;
+}
+.viewer-parts [data-part].active > span {
+  color: #a27849;
+}
+.viewer-parts [data-part]:focus-visible {
+  outline: 1px solid #a27849;
+  outline-offset: 3px;
+}
 .viewer-footer {
   position: absolute;
   bottom: 68px;

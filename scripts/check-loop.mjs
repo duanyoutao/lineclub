@@ -11,11 +11,15 @@ import {
   wrap,
 } from "../src/archive-loop.ts";
 
-// The same eight files and five column categories recur on both sides of zero.
+// Each column's documents and the five column categories recur on both sides of
+// zero. Wrap by the column's own length: columns no longer all hold eight.
 for (let lane = -23; lane <= 23; lane++) {
   const files = columnFiles(wrap(lane, 5));
   for (let row = -35; row <= 35; row++) {
-    assert.equal(fileAtCell({ lane, row }), files[wrap(row - 12, 8)]);
+    assert.equal(
+      fileAtCell({ lane, row }),
+      files[wrap(row - 12, files.length)],
+    );
   }
 }
 let checks = 0;

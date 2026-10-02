@@ -18,6 +18,9 @@ function collect(scene,interior) {
   if(!m.isMesh)return;
   const isInterior=["optical-core","optical-lenses"].includes(m.userData.assemblyPart);
   if(isInterior!==interior)return;
+  // Cover_Mark is a deliberate later addition to the front cover, not part of the
+  // refined case this comparison freezes. Asserted separately below.
+  if(m.material.name.replace(/\.\d+$/,"")==="Cover_Mark")return;
   const p=m.geometry.attributes.position,n=m.geometry.attributes.normal,nm=new T.Matrix3().getNormalMatrix(m.matrixWorld),rows=[];
   for(let i=0;i<p.count;i++) {
    const v=new T.Vector3().fromBufferAttribute(p,i).applyMatrix4(m.matrixWorld);
@@ -27,6 +30,9 @@ function collect(scene,interior) {
   result.set(m.userData.assemblyPart+":"+m.material.name.replace(/\.\d+$/,""),{rows:rows.sort(),color:m.material.color.toArray().map(x=>x.toFixed(6)),roughness:m.material.roughness,metalness:m.material.metalness});
  });return result;
 }
+const surfaces=new Set();
+current.traverse(m=>{if(m.isMesh)surfaces.add(m.userData.assemblyPart+":"+m.material.name.replace(/\.\d+$/,""))});
+assert.ok(surfaces.has("cover:Cover_Mark"),"The front cover must carry the Rhine Lab mark");
 assert.deepEqual(collect(current,true),collect(chosen,true),"Restore the chosen first-version interior geometry, normals and source materials");
 assert.deepEqual(collect(current,false),collect(previous,false),"Keep the refined outer case unchanged");
 console.log(JSON.stringify({passed:true,interior:"matches chosen first version",outerCase:"unchanged",precision:1e-5},null,2));
