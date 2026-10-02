@@ -826,6 +826,7 @@ document.addEventListener("click", (e) => {
       records[selected].title,
       () => activeScene.createAssemblyModel(),
       !motionActive("viewerNavigation"),
+      records[selected].substrate,
     );
     audio.play("page-open");
   }

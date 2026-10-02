@@ -13,6 +13,13 @@ import {
 } from "./quality-renderer";
 import { fullMotion, type MotionPreferences } from "./motion-preferences";
 import { PARTS } from "./viewer-parts";
+import { assetUrl } from "./asset-url";
+import {
+  createSubstrateDecal,
+  disposeSubstrateDecal,
+  findDiffuserPanel,
+  loadSubstrateTexture,
+} from "./substrate-decal";
 
 type ModelSource = { model: THREE.Group; dispose: () => void; setClarity?: (value: number) => void };
 export class ModelViewer {
@@ -76,6 +83,10 @@ export class ModelViewer {
   private raycaster = new THREE.Raycaster();
   private pressAt?: { x: number; y: number };
   private pickCycle?: { x: number; y: number; order: string[]; index: number };
+  // Per-document substrate artwork supplied by the opened archive, if any.
+  private substrateSource?: string;
+  private substrateDecal?: THREE.Mesh;
+  private substrateRequest = 0;
 
   constructor(
     parent: HTMLElement,
@@ -244,12 +255,16 @@ export class ModelViewer {
     title: string,
     provider: () => Promise<ModelSource>,
     reduced: boolean,
+    substrate?: string,
   ) {
     if (this.isOpen) return;
     this.isOpen = true;
     this.closing = false;
     this.reduced = reduced;
     this.provider = provider;
+    this.substrateSource = substrate;
+    disposeSubstrateDecal(this.substrateDecal);
+    this.substrateDecal = undefined;
     this.opener = document.activeElement as HTMLElement | null;
     this.siblings = [...this.root.parentElement!.children]
       .filter(
@@ -307,6 +322,7 @@ export class ModelViewer {
       source.model.position.set(0, -1.85, 0);
       this.scene.add(source.model);
       applyTextureQuality(source.model, this.renderer, this.quality);
+      if (this.substrateSource) void this.attachSubstrateDecal();
       this.loading = false;
       loading.hidden = true;
       this.controls.enabled = true;
@@ -429,6 +445,9 @@ export class ModelViewer {
     this.controls.minDistance = 5;
     this.pickCycle = undefined;
     this.showParts();
+    disposeSubstrateDecal(this.substrateDecal);
+    this.substrateDecal = undefined;
+    this.substrateSource = undefined;
     this.root.hidden = true;
     this.root.dataset.transition = "closed";
     this.modelTransition?.cancel();
@@ -520,6 +539,24 @@ export class ModelViewer {
       if (id && !order.includes(id)) order.push(id);
     }
     return order;
+  }
+  /** Lay the opened archive's substrate artwork on the substrate part's panel. */
+  private async attachSubstrateDecal() {
+    const source = this.substrateSource;
+    if (!source) return;
+    const ticket = ++this.substrateRequest;
+    try {
+      const texture = await loadSubstrateTexture(source, assetUrl);
+      const group = ticket === this.substrateRequest ? this.groups.get("substrate") : undefined;
+      const panel =
+        group && this.isOpen && !this.closing ? findDiffuserPanel(group) : undefined;
+      if (!panel) {
+        texture.dispose();
+        return;
+      }
+      disposeSubstrateDecal(this.substrateDecal);
+      this.substrateDecal = createSubstrateDecal(panel, texture);
+    } catch {}
   }
   private setSurface(clear: boolean) {
     this.targetClarity = clear ? 1 : 0;

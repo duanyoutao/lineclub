@@ -19,7 +19,7 @@ import { applyTextureQuality, resizeQuality } from "./quality-renderer";
 import { CardAppearance } from "./appearance";
 import { configureInternalOptics } from "./internal-optics";
 import { DecryptionController } from "./decryption";
-import { fileAtSlot, fileLocation } from "./data";
+import { fileAtSlot, fileLocation, records } from "./data";
 import {
   cellKey,
   sameCell,
@@ -37,6 +37,7 @@ import { labelMarkSvg } from "./brand";
 import { archiveFraming } from "./viewport-layout";
 import { ArchiveDrag, ArchivePlaneMomentum, type DragAxis, type DragProjection, type DragPosition } from "./archive-drag";
 import { assetUrl as publicAsset } from "./asset-url";
+import { createSubstrateDecal, disposeSubstrateDecal, findDiffuserPanel, loadSubstrateTexture } from "./substrate-decal";
 import { fullMotion, reducedMotion, type MotionPreferences } from "./motion-preferences";
 import {
   archiveWave,
@@ -234,6 +235,10 @@ export class ArchiveScene {
   private labelCanvas = document.createElement("canvas");
   private labelTexture?: THREE.CanvasTexture;
   private labelMark = new Image();
+  // Per-document information-substrate artwork; most documents carry none.
+  private substrateDecal?: THREE.Mesh;
+  private substrateDecalSource?: string;
+  private substrateRequest = 0;
   private motion: MotionPreferences = fullMotion();
   private quality = normalizeQuality(undefined);
   private appliedQuality = "";
@@ -488,6 +493,7 @@ export class ArchiveScene {
     this.appearance.prepare(this.model);
     this.appearance.apply(this.model, 0);
     this.drawLabel(0);
+    this.updateSubstrateDecal(0);
     this.scene.add(this.model);
     this.model.position.copy(this.cellPosition(poolCell(this.selectedSlot)));
     this.loaded = true;
@@ -762,10 +768,34 @@ export class ArchiveScene {
     } else this.emitPulse(cell);
     this.targetRotation = 0;
     this.drawLabel(index);
+    this.updateSubstrateDecal(index);
   }
   private emitPulse(cell: ArchiveCell) {
     this.pulses.push({ ...cell, time: this.clock });
     this.pulses = this.pulses.slice(-6);
+  }
+  /** Swap the substrate artwork when the selected document supplies one. */
+  private updateSubstrateDecal(index: number) {
+    const source = records[index]?.substrate;
+    if (source === this.substrateDecalSource) {
+      if (this.substrateDecal) this.substrateDecal.visible = Boolean(source);
+      return;
+    }
+    this.substrateDecalSource = source;
+    const ticket = ++this.substrateRequest;
+    disposeSubstrateDecal(this.substrateDecal);
+    this.substrateDecal = undefined;
+    if (!source) return;
+    void loadSubstrateTexture(source, publicAsset)
+      .then((texture) => {
+        const panel = ticket === this.substrateRequest ? findDiffuserPanel(this.model) : undefined;
+        if (!panel) {
+          texture.dispose();
+          return;
+        }
+        this.substrateDecal = createSubstrateDecal(panel, texture);
+      })
+      .catch(() => {});
   }
   private drawLabel(index: number) {
     if (!this.labelTexture) return;

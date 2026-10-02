@@ -132,6 +132,20 @@ const invalidCases = [
     /\*\* 须成对/,
   ],
   [
+    "substrate outside marks",
+    (c) => {
+      c.records.find((r) => r.substrate).substrate = "../secrets.png";
+    },
+    /marks\/ 目录/,
+  ],
+  [
+    "missing substrate file",
+    (c) => {
+      c.records.find((r) => r.substrate).substrate = "marks/does-not-exist.png";
+    },
+    /找不到文件/,
+  ],
+  [
     "null record",
     (c) => {
       c.records[0] = null;

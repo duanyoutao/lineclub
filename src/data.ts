@@ -15,6 +15,8 @@ export interface ArchiveRecord {
   source: string;
   /** Optional long-form chapters; only the reading stage renders these. */
   sections?: ReaderSection[];
+  /** Optional per-document artwork for the information substrate, under public/. */
+  substrate?: string;
 }
 
 export const records: ArchiveRecord[] = content.records;

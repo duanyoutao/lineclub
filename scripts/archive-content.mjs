@@ -31,6 +31,9 @@ const maxPerColumn = 20;
 const maxSections = 24;
 const figurePattern =
   /^media\/[A-Za-z0-9][A-Za-z0-9._-]*\.(?:jpg|jpeg|png|gif|webp)$/;
+// Optional per-document substrate artwork, kept apart from chapter figures.
+const markPattern =
+  /^marks\/[A-Za-z0-9][A-Za-z0-9._-]*\.(?:jpg|jpeg|png|gif|webp)$/;
 const publicDir = fileURLToPath(new URL("../public/", import.meta.url));
 
 /** Reports markup the renderer would otherwise show as literal text. */
@@ -173,6 +176,15 @@ export function validateContent(content) {
     }
     if (record.sections !== undefined) {
       validateSections(record.sections, label, errors);
+    }
+    if (record.substrate !== undefined) {
+      if (!isText(record.substrate) || !markPattern.test(record.substrate)) {
+        errors.push(
+          `${label}.substrate：必须是 public/ 下 marks/ 目录中的图片路径`,
+        );
+      } else if (!existsSync(path.join(publicDir, record.substrate))) {
+        errors.push(`${label}.substrate：找不到文件 public/${record.substrate}`);
+      }
     }
   });
   for (const name of columns) {
