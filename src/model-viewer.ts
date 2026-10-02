@@ -428,6 +428,7 @@ export class ModelViewer {
     this.selected = undefined;
     this.controls.minDistance = 5;
     this.pickCycle = undefined;
+    this.showParts();
     this.root.hidden = true;
     this.root.dataset.transition = "closed";
     this.modelTransition?.cancel();
@@ -461,6 +462,7 @@ export class ModelViewer {
       this.selected = undefined;
       this.controls.minDistance = 5;
       this.controls.target.set(0, 0, 0);
+      this.showParts();
       this.syncParts();
       this.setStatus(
         this.targetSpread ? "已拆解" : this.spread.value > 0.001 ? "正在重组" : "已组装",
@@ -468,6 +470,8 @@ export class ModelViewer {
       return;
     }
     this.selected = next;
+    // Isolate: only the inspected part stays in the scene.
+    this.showParts(next);
     const box = this.partBox.setFromObject(this.groups.get(next)!);
     box.getCenter(this.partCenter);
     this.controls.target.copy(this.partCenter);
@@ -484,7 +488,11 @@ export class ModelViewer {
       .addScaledVector(direction, distance);
     this.controls.update();
     this.syncParts();
-    this.setStatus(`已选中 · ${PARTS.find((part) => part.id === next)!.label}`);
+    this.setStatus(`已单独查看 · ${PARTS.find((part) => part.id === next)!.label}`);
+  }
+  /** Hide every assembly part except `only`; called with no argument to restore. */
+  private showParts(only?: string) {
+    for (const [id, group] of this.groups) group.visible = !only || id === only;
   }
   private syncParts() {
     for (const node of this.root.querySelectorAll<HTMLElement>("[data-part]")) {
@@ -502,10 +510,10 @@ export class ModelViewer {
     );
     this.raycaster.setFromCamera(this.pointerAt, this.camera);
     const order: string[] = [];
-    for (const hit of this.raycaster.intersectObjects(
-      [...this.groups.values()],
-      true,
-    )) {
+    // Hidden parts are still raycast targets, so filter explicitly: otherwise a
+    // tap could select something the user cannot see.
+    const visible = [...this.groups.values()].filter((group) => group.visible);
+    for (const hit of this.raycaster.intersectObjects(visible, true)) {
       let node: THREE.Object3D | null = hit.object;
       while (node && !node.userData.partId) node = node.parent;
       const id = node?.userData.partId as string | undefined;
@@ -548,6 +556,7 @@ export class ModelViewer {
     if (this.selected) {
       this.selected = undefined;
       this.controls.minDistance = 5;
+      this.showParts();
       this.syncParts();
       this.setStatus(this.targetSpread ? "已拆解" : "已组装");
     }
@@ -771,6 +780,7 @@ export class ModelViewer {
         id,
         z: group.position.z,
         meshes: group.children.length,
+        visible: group.visible,
       })),
     });
   }
