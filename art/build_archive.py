@@ -141,6 +141,77 @@ text('Database label','INTERNAL DATABASE',-1.825,3.017,.042,core)
 text('Serial number','NO.001',-1.825,2.875,.148)
 text('Information label','INFO',-.99,3.075,.076)
 text('Symbol label','+ / -',-.99,2.9,.095)
+
+# --- Rhine Lab mark printed on the frosted front cover ------------------------
+# Geometry is the interface's own shared mark: the two subpaths and the tick
+# strokes of the `paths` constant in src/brand.ts, which is also what the printed
+# archive label draws. Coordinates are svg user units of that 310-wide viewBox,
+# so the cover mark and the on-screen mark stay the same geometry instead of a
+# redrawn approximation. Built as flat bands rather than bevelled curves: a round
+# bevel is isotropic and would protrude out of the glass by half the stroke
+# width. The lobes and the ticks cross each other, so each band carries a small
+# depth epsilon; coincident coplanar faces otherwise render as black patches.
+mark=material('Cover_Mark',(.042,.040,.036),.5,.04)
+MARK_SCALE=1.75/(310.0-4.0)              # 1.75 blender units of visual width
+MARK_AT=(.78,3.04);MARK_DEPTH=-.110      # printed just in front of the cover face
+MARK_THICK=.003;MARK_STEP=.0016
+def mark_xyz(px,py,y):return ((px-155.0)*MARK_SCALE+MARK_AT[0],y,(71.5-py)*MARK_SCALE+MARK_AT[1])
+
+# The interface's shared mark, in the SVG's own draw order: the two lobes of
+# src/brand.ts's `paths` (which is also what the printed label draws), then the
+# + as two strokes and the - tick. Coordinates are svg user units of that
+# 310-wide viewBox. Each entry is one continuous stroke; separate strokes must
+# stay separate bands, or the outline jumps between them.
+MARK_STROKES=[
+  (26,[((156,75),(127,48),(103,15),(70,15)),((70,15),(37,15),(15,39),(15,70)),
+       ((15,70),(15,101),(38,128),(70,128)),((70,128),(103,128),(127,96),(176,52))]),
+  (26,[((155,75),(182,99),(208,128),(240,128)),((240,128),(273,128),(295,105),(295,73)),
+       ((295,73),(295,41),(273,15),(240,15)),((240,15),(221,15),(207,23),(192,38))]),
+  (15,[((44,70),(44,70),(94,70),(94,70))]),
+  (15,[((69,45),(69,45),(69,95),(69,95))]),
+  (15,[((219,70),(219,70),(263,70),(263,70))]),
+]
+
+def mark_outline(segments,steps=16):
+    points=[]
+    for p0,c1,c2,p3 in segments:
+        for i in range(steps):
+            t=i/steps;u=1-t
+            points.append(tuple(u**3*p0[k]+3*u*u*t*c1[k]+3*u*t*t*c2[k]+t**3*p3[k] for k in (0,1)))
+    return points
+
+def mark_band(name,outline,stroke,y):
+    # Flat quad strip: half the stroke across the cover plane, thickness along Y.
+    # Capped at both ends so each band is a closed solid for the fuse below.
+    pts=[mark_xyz(px,py,y) for px,py in outline];n=len(pts);verts=[];faces=[]
+    for i in range(n):
+        a,b=pts[i-1],pts[(i+1)%n];tx,tz=b[0]-a[0],b[2]-a[2]
+        length=math.hypot(tx,tz) or 1.0
+        ux,uz=-tz/length,tx/length;half=stroke*MARK_SCALE/2
+        for sy in (-MARK_THICK,MARK_THICK):
+            verts.append((pts[i][0]+ux*half,pts[i][1]+sy,pts[i][2]+uz*half))
+            verts.append((pts[i][0]-ux*half,pts[i][1]+sy,pts[i][2]-uz*half))
+    for i in range(n-1):
+        a=i*4;b=(i+1)*4
+        faces.extend([(a,b,b+1,a+1),(a+3,a+2,b+2,b+3),(a,a+2,b+2,b),(a+1,b+1,b+3,a+3)])
+    last=(n-1)*4
+    faces.extend([(0,1,3,2),(last,last+2,last+3,last+1)])
+    mesh=bpy.data.meshes.new(name);mesh.from_pydata(verts,[],faces);mesh.update()
+    obj=bpy.data.objects.new(name,mesh);scene.collection.objects.link(obj)
+    mesh.materials.append(mark)
+    # Closed solid now that the ends are capped, so outward orientation is
+    # unambiguous; without this the open-ended strokes wind inside out and render
+    # unlit next to the lobes.
+    bpy.ops.object.select_all(action='DESELECT')
+    obj.select_set(True);bpy.context.view_layer.objects.active=obj
+    bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.mesh.normals_make_consistent(inside=False)
+    bpy.ops.object.mode_set(mode='OBJECT')
+    return obj
+
+for i,(stroke,segments) in enumerate(MARK_STROKES):
+    mark_band('Cover mark %d'%i,mark_outline(segments),stroke,MARK_DEPTH+i*MARK_STEP)
+
 for i in range(16):
     o=cube('Laser etched vent',(1.04+i*.054,-.111,.57),(.023,.009,.1),core,.003);o.rotation_euler.y=.4
 for i in range(25):cube('Calibration mark',(-2.23,-.108,.61+i*.052),(.035 if i%5 else .075,.005,.006),core,0)
