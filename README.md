@@ -115,7 +115,7 @@ npm run build:wallpaper
 
 ### 白底开场
 
-从终端逐字输入到圆环、Logo 绘制，再进入身份接入与权限验证。可以重播，也可以跳过开场直接进入阵列。
+从终端逐字输入到圆环、Logo 绘制，再进入身份接入与权限验证。可以重播，也可以跳过开场直接进入阵列。进入后同一个标签页被浏览器回收、刷新或从后台恢复时会接着原画面继续，新标签页仍从入场开始。
 
 [![白底开场中的莱茵生命标志与身份接入文字](docs/media/boot.jpg)](docs/media/boot.jpg)
 
@@ -241,9 +241,10 @@ node scripts/check-decryption.mjs
 node scripts/check-shell.mjs
 node scripts/check-internal-optics.mjs
 node scripts/check-quality.mjs
+node scripts/check-session-resume.mjs
 ```
 
-这些脚本检查运动、循环位置、外观、装配结构、解密轨迹、外壳、内构与画质参数。视觉效果仍需在浏览器中实际查看，尤其是快速切换、模型归位、文档揭示及查看器进出过渡。
+这些脚本检查运动、循环位置、外观、装配结构、解密轨迹、外壳、内构与画质参数。`check-session-resume.mjs` 需要先执行 `npm run build`，它用真实浏览器验证标签页被回收或刷新后的续看。视觉效果仍需在浏览器中实际查看，尤其是快速切换、模型归位、文档揭示及查看器进出过渡。
 
 | 本地调试路径 | 用途 |
 | --- | --- |

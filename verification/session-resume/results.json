@@ -1,0 +1,21 @@
+{
+  "checks": [
+    "a fresh tab opens the entry and starts the opening",
+    {
+      "name": "reload resumes the array at the same file",
+      "selected": "X-010"
+    },
+    {
+      "name": "reload resumes the open document",
+      "selected": "X-010"
+    },
+    "offline reload from the service worker resumes the document",
+    "a review URL still bypasses the entry and the resume",
+    "a new tab keeps its own session and shows the entry",
+    "reduced motion resumes the array without the opening",
+    "blocked session storage falls back to the entry"
+  ],
+  "skipped": [],
+  "errors": [],
+  "failed": null
+}

@@ -12,6 +12,8 @@
 
 如果浏览器清除了网站数据或系统回收了缓存，需要联网重新准备离线资源。启用声音时，资源就绪后轻触“点击进入”（或按 Enter），声音准备完成后统一开始开机动画；关闭全部声音的用户直接进入。声音加载失败可重试，也可选择“关闭声音并进入”，此选择会关闭并保存音效与音乐开关。开启减少动态效果时仍可点击进入并播放声音，但会跳过开机动画。
 
+进入终端后，同一个标签页或主屏幕窗口被浏览器回收、刷新或从后台恢复时，会接着离开时的档案与页面继续，不再重播入口与开机动画（记录保存在该标签页的会话中，新标签页仍从入口开始）。需要重新观看开场时使用页脚 `REINITIALIZE ↗` 或设置中的“启用完整动效并重播”。
+
 ## 桌面与其他手机
 
 支持安装的浏览器会在终端设置中提供“安装到设备”，也可使用浏览器菜单安装。不同浏览器的菜单名称可能不同；普通浏览器标签页同样支持在线使用。
@@ -36,7 +38,7 @@
 
 本地验证：运行 `npm run build`，再运行 `npm run preview`。浏览器测试见 `scripts/check-pwa.mjs`，需要本机可用的 Playwright 与 Chrome；可通过 `PLAYWRIGHT_MODULE` 指定已有 Playwright 模块路径。
 
-`scripts/check-startup-motion.mjs` 验证首次进入跟随浏览器动效偏好，以及本站的完整 / 减少 / 自定义选择、重播和正文解密；`scripts/check-pwa-recovery.mjs` 验证旧版迁移，需要以 `PWA_PREVIOUS_DIST` 指定保留的旧生产构建。两个脚本可设 `REVIEW_CHANNEL=msedge` 验证 Edge。更新恢复页保持网络获取，未加入离线资源清单。
+`scripts/check-startup-motion.mjs` 验证首次进入跟随浏览器动效偏好，以及本站的完整 / 减少 / 自定义选择、重播和正文解密；`scripts/check-pwa-recovery.mjs` 验证旧版迁移，需要以 `PWA_PREVIOUS_DIST` 指定保留的旧生产构建。两个脚本可设 `REVIEW_CHANNEL=msedge` 验证 Edge。更新恢复页保持网络获取，未加入离线资源清单。`scripts/check-session-resume.mjs` 需要先 `npm run build`，用真实浏览器验证回收或刷新后的续看、对照入口绕过、按标签页隔离与离线重载。
 
 图标源自项目共享莱茵生命 SVG 路径，生成脚本为 `scripts/build-icons.mjs`，通过 `SHARP_MODULE` 可指定本地 Sharp 模块。修改资源后重新构建即可生成新的离线版本，无需手动修改缓存编号。
 

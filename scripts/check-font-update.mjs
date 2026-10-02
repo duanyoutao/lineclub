@@ -39,6 +39,9 @@ try {
   report.checks.push('Previous complete release updates atomically; obsolete whole fonts removed; bookmarks and preferences retained');
   // Enable audio only for the next entry, then prove its cached resources work.
   await page.evaluate(()=>{const p=JSON.parse(localStorage.getItem('rhine-settings'));p.sound=true;p.music=true;localStorage.setItem('rhine-settings',JSON.stringify(p))});
+  // This check needs the entry itself, so it starts a fresh tab session; the
+  // reload below must not resume the open terminal.
+  await page.evaluate(()=>sessionStorage.clear());
   await context.setOffline(true);await page.reload();await page.waitForFunction(()=>window.rhine?.stats().startup==='waiting');
   await page.locator('.entry-start').click();await ready();
   assert.equal(await page.evaluate(()=>window.rhine.stats().audio.tracks),3);

@@ -44,6 +44,7 @@ import {
   type StoredMotion,
 } from "./motion-preferences";
 import { StartupGate } from "./startup";
+import { readSessionResume, saveSessionResume, type ResumeMode } from "./session-resume";
 import { isWallpaper, wallpaperHost, wallpaperFrame, type WallpaperProperties } from "./wallpaper";
 import "./startup.css";
 import "./wallpaper.css";
@@ -233,6 +234,9 @@ let musicSuppressed = false;
 function configureAudio() { audio.configure({ ...prefs, music: prefs.music && !musicSuppressed }); }
 configureAudio();
 const reviewEntry = reviewParams.has("scene") || reviewParams.has("time") || reviewParams.get("review") === "1";
+// A tab that was discarded or reloaded after entering continues where it was
+// left; a new tab, an explicit review URL and the wallpaper still show entry.
+const resume = !isWallpaper && !reviewEntry ? readSessionResume(records.length) : undefined;
 let started = false;
 const loading = $("#loading");
 // The entry screen uses the actual viewport, including portrait phones; the
@@ -240,7 +244,7 @@ const loading = $("#loading");
 $("#viewport").append(loading);
 $("#stage").inert = true;
 $(".mobile-entry").inert = true;
-const entry = !isWallpaper && !reviewEntry && (prefs.sound || prefs.music) ? new StartupGate({
+const entry = !isWallpaper && !reviewEntry && !resume && (prefs.sound || prefs.music) ? new StartupGate({
   root: loading,
   unlock: () => audio.unlock(),
   cancel: () => audio.cancelEntry(),
@@ -251,6 +255,10 @@ if (entry) {
   if (prefs.music) void audio.prepareMusic().catch(() => { /* Entry offers retry. */ });
 }
 let audioPreview = false, audioPreviewRequest = 0;
+function saveSession() {
+  if (!started || isWallpaper || reviewEntry) return;
+  saveSessionResume(selected, mode === "detail" ? "detail" : "archive");
+}
 let scene: ArchiveScene | undefined;
 let threeState: "on" | "closing" | "off" | "loading" = "on";
 let resumeCell: { lane: number; row: number } | undefined;
@@ -411,6 +419,7 @@ function setMode(next: Mode) {
       $("#detail-content").inert = false;
     }
   }
+  saveSession();
 }
 function select(index: number, navigation?: ArchiveNavigation) {
   selected = (index + records.length) % records.length;
@@ -421,6 +430,7 @@ function select(index: number, navigation?: ArchiveNavigation) {
   updateSelection(navigation);
   const columnMove = navigation && "axis" in navigation && navigation.axis === "lane";
   audio.play(columnMove ? "column" : "tick", columnMove ? navigation.direction * .45 : 0);
+  saveSession();
 }
 function stepFile(direction: number) {
   const files = columnFiles(fileLocation(selected).lane);
@@ -1186,14 +1196,14 @@ async function start() {
     if (scene) bindScene(scene);
     savePrefs();
     ready = true;
-    select(0);
+    select(resume?.selected ?? 0);
     if (entry) entry.ready();
     else {
       if (isWallpaper) {
         // CEF allows automatic audio; never block the visual on audio policy or decoding.
         await Promise.race([audio.unlock(), new Promise(resolve => setTimeout(resolve, 3000))]);
       }
-      completeStartup(false);
+      completeStartup(false, resume?.mode);
     }
   } catch (error) {
     console.error(error);
@@ -1201,7 +1211,7 @@ async function start() {
       '<div class="error-state"><strong>CONNECTION INTERRUPTED</strong><p>三维档案资源未能载入。请确认浏览器已启用硬件加速，然后重新连接。</p><button onclick="location.reload()">RECONNECT →</button></div>';
   }
 }
-function completeStartup(silent: boolean) {
+function completeStartup(silent: boolean, restored?: ResumeMode) {
   if (started || !ready) return;
   started = true;
   if (silent) {
@@ -1214,10 +1224,13 @@ function completeStartup(silent: boolean) {
   const fade = motionActive("boot") ? 600 : 0;
   bootStart = performance.now() / 1000 - (reviewParams.has("time") ? Number(reviewParams.get("time")) : 1.76);
   if (!reviewParams.has("time")) bootStart += fade / 1000;
-  setMode("boot");
-  if (reviewParams.get("scene") === "archive" || (!motionActive("boot") && !reviewParams.has("time"))) setMode("archive");
-  if (reviewParams.get("scene") === "detail") setMode("detail");
-  if (isWallpaper && wallpaperHost()?.properties.boot?.value === false) setMode("archive");
+  if (restored) setMode(restored);
+  else {
+    setMode("boot");
+    if (reviewParams.get("scene") === "archive" || (!motionActive("boot") && !reviewParams.has("time"))) setMode("archive");
+    if (reviewParams.get("scene") === "detail") setMode("detail");
+    if (isWallpaper && wallpaperHost()?.properties.boot?.value === false) setMode("archive");
+  }
   $("#stage").inert = false;
   $(".mobile-entry").inert = false;
   loading.classList.add("loaded");
@@ -1225,7 +1238,7 @@ function completeStartup(silent: boolean) {
   setTimeout(() => {
     const restoreFocus = loading.contains(document.activeElement) || document.activeElement === document.body;
     loading.remove();
-    if (entry && restoreFocus) {
+    if ((entry || resume) && restoreFocus) {
       const skip = $("#skip");
       const target = mode === "boot" ? skip.getClientRects().length ? skip : $(".mobile-entry") : $(".read-file");
       target.focus({ preventScroll: true });
@@ -1346,6 +1359,8 @@ Object.assign(window, {
       mode,
       ready,
       startup: started ? "started" : entry?.phase ?? "loading",
+      entry: Boolean(entry),
+      resumed: resume?.mode ?? null,
       motion: { reduced: motionIsReduced(), preset: prefs.motionPreset },
       bootTime: mode === "boot" ? started ? (frozenTime ?? performance.now() / 1000 - bootStart) + 5 : 6.76 : null,
       selected: records[selected].id,

@@ -35,7 +35,10 @@ try {
   await close();
   await page.screenshot({ path: 'verification/web-integration/dark-fast.png' });
   await page.reload(); await page.waitForFunction(() => window.rhine?.stats().ready);
-  await page.locator('.entry-start').click(); await page.waitForFunction(() => window.rhine.stats().startup === 'started');
+  // A reloaded tab continues in the terminal instead of showing the entry again.
+  assert.equal((await stats()).resumed, 'archive');
+  assert.equal(await page.locator('.entry-start').count(), 0);
+  await page.waitForFunction(() => window.rhine.stats().startup === 'started');
   await page.evaluate(() => window.rhine.archive()); await page.waitForTimeout(800);
   assert.equal((await stats()).superPerformance, true);
   assert.equal(await page.evaluate(() => document.documentElement.dataset.darkSurface), 'true');

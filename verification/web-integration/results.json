@@ -8,50 +8,53 @@
       "label": 0,
       "labelValue": 0,
       "clarity": 0,
-      "phase": "waiting"
+      "phase": "waiting",
+      "modelClarity": 0
     },
     "topLeft": [
       516,
-      280
+      299
     ],
     "topRight": [
       898,
-      87
+      106
     ],
     "labelTopLeft": [
       599,
-      321
+      340
     ],
     "labelBottomLeft": [
       599,
-      385
+      404
     ],
     "modelPosition": [
       0,
-      -1.9432,
-      -2.1768
+      -2.076,
+      -2.1781
     ],
     "cameraPosition": [
       -114.5564,
       45.5345,
       68.6579
     ],
-    "fieldOfView": 2.999159420495768,
+    "fieldOfView": 2.999159840485719,
     "loaded": true,
-    "drawCalls": 43,
+    "drawCalls": 47,
+    "renderedFrames": 297,
+    "reusedFrames": 0,
     "superPerformance": true,
     "presentation": 1,
-    "triangles": 1312282,
-    "archiveCount": 278,
+    "triangles": 1310930,
+    "archiveCount": 277,
     "archiveCandidates": 399,
-    "archiveCulled": 121,
+    "archiveCulled": 122,
     "archiveCapacity": 576,
     "archiveCoverage": "standard",
     "returningFiles": 0,
     "selectionPhase": "settled",
     "pendingPulse": null,
     "pulses": [],
-    "referenceTime": 37.07,
+    "referenceTime": 37.01,
     "selectedSlot": 76,
     "selectedLane": 2,
     "selectedCell": {
@@ -65,12 +68,12 @@
     "holdingArchive": false,
     "dragProjection": {
       "lane": {
-        "x": -329.9848645599612,
-        "y": 172.94017667625525
+        "x": -329.8851857849111,
+        "y": 173.3365152612342
       },
       "row": {
-        "x": -63.80490046678038,
-        "y": -12.386913393363914
+        "x": -63.785045292467515,
+        "y": -12.415303126463703
       }
     },
     "dragMapping": null,
@@ -87,32 +90,34 @@
     "laneFocus": 2,
     "columnCamera": 0,
     "rotation": 0,
-    "clearance": -3.2930383612627256,
+    "clearance": -3.300780905120723,
     "canInspect": false,
     "returnPhase": "lowering",
     "extraction": 0.4,
     "appearance": 1,
     "cameraDetail": 0,
-    "idleGain": 0.9034563460125465,
+    "idleGain": 0.8983601910291337,
     "flatten": 0,
     "spectrumActivity": 0,
     "selectedIndexDim": 0,
     "returningIndexDims": [],
-    "cameraDistance": 139.99997971447004,
+    "cameraDistance": 139.99997202229838,
     "cameraNear": 5,
     "cameraFar": 300,
-    "fogNear": 140.99997971447004,
-    "fogFar": 155.99997971447004,
+    "fogNear": 140.99997202229838,
+    "fogFar": 155.99997202229838,
     "returningAppearance": [],
     "rail": 0,
     "threeState": "on",
-    "fps": 166,
+    "fps": 132,
     "mode": "archive",
     "ready": true,
     "startup": "started",
+    "entry": true,
+    "resumed": null,
     "motion": {
       "reduced": false,
-      "systemReduced": false
+      "preset": "full"
     },
     "bootTime": null,
     "selected": "X-001",
