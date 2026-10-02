@@ -1,0 +1,54 @@
+{
+  "material": "Cover_Mark",
+  "files": {
+    "cassette": {
+      "file": "public/assets/archive-cassette.glb",
+      "triangles": 336,
+      "crossing": 0,
+      "coplanar": 16,
+      "coplanarWithinOnePrint": 16,
+      "foldedPlanes": [
+        0.226,
+        0.226,
+        0.226,
+        0.226,
+        0.226,
+        0.226,
+        0.226,
+        0.226
+      ],
+      "coplanarConflicts": [],
+      "crossingBoundsXY": null,
+      "hash": "a69c7f7b5e51a81a0af905aa3c4908a8",
+      "pixels": 459450,
+      "width": 1.7499999403953552,
+      "height": 0.794931173324585,
+      "depth": 0.01279999315738678
+    },
+    "assembly": {
+      "file": "public/assets/archive-assembly.glb",
+      "triangles": 336,
+      "crossing": 0,
+      "coplanar": 16,
+      "coplanarWithinOnePrint": 16,
+      "foldedPlanes": [
+        0.226,
+        0.226,
+        0.226,
+        0.226,
+        0.226,
+        0.226,
+        0.226,
+        0.226
+      ],
+      "coplanarConflicts": [],
+      "crossingBoundsXY": null,
+      "hash": "a69c7f7b5e51a81a0af905aa3c4908a8",
+      "pixels": 459450,
+      "width": 1.7499999403953552,
+      "height": 0.794931173324585,
+      "depth": 0.01279999315738678
+    }
+  },
+  "errors": []
+}

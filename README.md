@@ -242,9 +242,10 @@ node scripts/check-shell.mjs
 node scripts/check-internal-optics.mjs
 node scripts/check-quality.mjs
 node scripts/check-session-resume.mjs
+node scripts/check-cover-mark.mjs
 ```
 
-这些脚本检查运动、循环位置、外观、装配结构、解密轨迹、外壳、内构与画质参数。`check-session-resume.mjs` 需要先执行 `npm run build`，它用真实浏览器验证标签页被回收或刷新后的续看。视觉效果仍需在浏览器中实际查看，尤其是快速切换、模型归位、文档揭示及查看器进出过渡。
+这些脚本检查运动、循环位置、外观、装配结构、解密轨迹、外壳、内构与画质参数。`check-session-resume.mjs` 需要先执行 `npm run build`，它用真实浏览器验证标签页被回收或刷新后的续看。`check-cover-mark.mjs` 检查封面标志是否为单层印刷面、有无互相穿透的三角面，并比对印刷轮廓指纹；用 Blender 5.x 重新建模时由 `art/build_archive.py` 直接产出该形态。视觉效果仍需在浏览器中实际查看，尤其是快速切换、模型归位、文档揭示及查看器进出过渡。
 
 | 本地调试路径 | 用途 |
 | --- | --- |
