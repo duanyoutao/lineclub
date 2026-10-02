@@ -158,7 +158,7 @@ text('Symbol label','+ / -',-.99,2.9,.095)
 mark=material('Cover_Mark',(.042,.040,.036),.5,.04)
 MARK_SCALE=1.75/(310.0-4.0)              # 1.75 blender units of visual width
 MARK_AT=(.78,3.04);MARK_DEPTH=-.110      # printed just in front of the cover face
-MARK_THICK=.003;MARK_STEP=.0016          # print stand-off, and per-stroke order
+MARK_THICK=.003                          # print stand-off in front of the cover face
 def mark_xyz(px,py,y):return ((px-155.0)*MARK_SCALE+MARK_AT[0],y,(71.5-py)*MARK_SCALE+MARK_AT[1])
 
 # The interface's shared mark, in the SVG's own draw order: the two lobes of
@@ -212,10 +212,20 @@ def mark_band(name,outline,stroke,y):
     bpy.ops.object.mode_set(mode='OBJECT')
     return obj
 
-# Every band prints on its own plane just in front of the cover, in the svg's
-# own draw order, so the strokes only overlap where the mark crosses itself.
-for i,(stroke,segments) in enumerate(MARK_STROKES):
-    mark_band('Cover mark %d'%i,mark_outline(segments),stroke,MARK_DEPTH+i*MARK_STEP-MARK_THICK)
+# The whole print shares one plane and is united into a single region: the
+# strokes overlap where the mark crosses itself, and a tight turn folds a
+# stroke's own offset back over it, so overlapping faces would fight in the
+# depth buffer. The union keeps the outline and drops the doubled-up layers.
+MARK_FACE=MARK_DEPTH-MARK_THICK
+mark_sheets=[mark_band('Cover mark %d'%i,mark_outline(segments),stroke,MARK_FACE)
+             for i,(stroke,segments) in enumerate(MARK_STROKES)]
+bpy.ops.object.select_all(action='DESELECT')
+for sheet in mark_sheets:sheet.select_set(True)
+bpy.context.view_layer.objects.active=mark_sheets[0]
+bpy.ops.object.join()
+bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT')
+bpy.ops.mesh.intersect_boolean(operation='UNION',solver='EXACT',use_self=True)
+bpy.ops.object.mode_set(mode='OBJECT')
 
 for i in range(16):
     o=cube('Laser etched vent',(1.04+i*.054,-.111,.57),(.023,.009,.1),core,.003);o.rotation_euler.y=.4
