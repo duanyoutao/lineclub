@@ -3,7 +3,7 @@
   "files": {
     "cassette": {
       "file": "public/assets/archive-cassette.glb",
-      "triangles": 336,
+      "triangles": 342,
       "crossing": 0,
       "coplanar": 16,
       "coplanarWithinOnePrint": 16,
@@ -27,7 +27,7 @@
     },
     "assembly": {
       "file": "public/assets/archive-assembly.glb",
-      "triangles": 336,
+      "triangles": 342,
       "crossing": 0,
       "coplanar": 16,
       "coplanarWithinOnePrint": 16,

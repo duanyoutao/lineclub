@@ -13,7 +13,7 @@
 ## 修改
 
 - `art/build_archive.py`：`mark_band` 不再生成实体板，只生成朝外的一个**印刷面**（四边形条带），五条描边保留原有深度顺序，印刷面仍落在原来的前表面平面上。相交处只是面与面重叠，不再有侧壁穿出。
-- `scripts/flatten-cover-mark.mjs`：本机只有 Blender 3.6，而这批资产由更新版本的导出器（glTF I/O v5.2.40）产出，无法原样重导出，因此用一个确定性脚本把已导出的 `archive-cassette.glb`、`archive-assembly.glb` 里 `Cover_Mark` 的网格改成与更新后脚本一致的形态：按五条描边的印刷平面各保留一层印刷面（1388 → 336 个三角面），并把这些面的法线统一朝外（+ 与 − 原本是反的）。其余几何与材质不动，重复执行不再变化。
+- 资产用本机 Steam 版 Blender 5.2（`E:\SteamLibrary\steamapps\common\Blender\blender.exe`，即产出这批资产的同一导出器版本）按项目流程重新生成：`art/build_archive.py` 后再 `art/build_assembly.py`，更新 `public/assets/archive-cassette.glb`、`archive-assembly.glb` 与两个 `.blend` 源文件。
 - 材质本身仍是 `doubleSided`，所以透过清透盖板从背面看仍然可读。
 
 ## 验证
@@ -27,16 +27,21 @@
 | 印刷轮廓指纹（封面平面、0.0012 网格） | `a69c7f7b…`，459450 px，宽 1.75、高 0.795 | 完全相同 |
 | 印刷层厚度 | — | 0.0128（五条描边各自的印刷平面） |
 
-轮廓指纹由“印刷面 + 印刷平面”的栅格化得出，修改前后逐像素一致，说明只删掉了穿透的壳，标志本身没有变形。原导出（`.tools/mark-before/`）与改后导出用同一脚本对比，见 `verification/cover-mark/results.json`。
+轮廓指纹由“印刷面 + 印刷平面”的栅格化得出，修改前后逐像素一致，说明只删掉了穿透的壳，标志本身没有变形。原导出保留在 `.tools/mark-before/`，与新导出用同一脚本对比，见 `verification/cover-mark/results.json`。
 
-真实浏览器中已确认：`npm run build` 通过（离线发行版 0755c18aafcbf572），360° 查看器中封面标志的十字与加减号完整、相交处无三角缺口。本轮没有做逐帧闪烁像素统计。
+真实浏览器中已确认：`npm run build` 通过，360° 查看器中封面标志的十字与加减号完整、相交处无三角缺口。本轮没有做逐帧闪烁像素统计。
 
 ## 复现
 
 ```sh
-node scripts/flatten-cover-mark.mjs --check   # 只看会保留哪些面
-node scripts/flatten-cover-mark.mjs           # 写回两个 GLB
 node scripts/check-cover-mark.mjs             # 几何与轮廓检查
 ```
 
-用 Blender 5.x 重新生成模型时，`art/build_archive.py` 已直接产出单层印刷面，不需要再跑 `flatten-cover-mark.mjs`。
+重新生成模型（本机 Steam 版 Blender 5.2）：
+
+```sh
+"C:\Program Files\...\blender.exe" --background --factory-startup --python-expr "import runpy; runpy.run_path(r'<repo>/art/build_archive.py', run_name='__main__')"
+"C:\Program Files\...\blender.exe" --background --factory-startup --python-expr "import runpy; runpy.run_path(r'<repo>/art/build_assembly.py', run_name='__main__')"
+```
+
+`art/build_archive.py` 已直接产出单层印刷面，不需要任何后处理脚本。

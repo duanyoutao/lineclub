@@ -280,4 +280,4 @@ WE 画质下拉增加「自定义」，仅此选择且超级模式关闭时显�
 用户反馈档案封面上印的莱茵生命标志在两条弧板相交处闪烁。原因是标志被当作实体板挤出，两条弧板在中心互相穿透，穿透出的内侧壁面在远摄详情镜头的深度精度下与相邻板抢像素。
 
 - 改为每条描边只保留朝外的一个印刷面，相交处只是面重叠；轮廓与位置不变，材质仍双面可读。见 verification/COVER-MARK.md。
-- 本机只有 Blender 3.6，而这批资产由 glTF I/O v5.2.40 导出，故用确定性脚本 scripts/flatten-cover-mark.mjs 把已导出 GLB 改成与更新后 art/build_archive.py 一致的形态；几何与轮廓检查由 scripts/check-cover-mark.mjs 固定（穿透 0 对、轮廓指纹一致）。
+- 本机 Steam 版 Blender 5.2 位于 `E:\SteamLibrary\steamapps\common\Blender\blender.exe`（与产出这批资产的导出器同版本），已按 `art/build_archive.py` + `art/build_assembly.py` 重导两个 GLB 与 `.blend`；几何与轮廓由 `scripts/check-cover-mark.mjs` 固定（穿透 0 对、轮廓指纹与修改前逐像素一致）。
