@@ -1,4 +1,4 @@
-import { bootMotion } from "./boot-motion";
+import { bootMotion, DEFAULT_OPERATOR, OPERATOR_PREFIX } from "./boot-motion";
 import { bootMarkContour } from "./brand";
 import { themeAmount } from "./theme-ui";
 import { BootLettering } from "./boot-lettering";
@@ -27,6 +27,13 @@ export class BootSequence {
   private poweredHTML: string;
   private accessLettering: BootLettering;
   private authLettering: BootLettering;
+  /** Who the opening identifies as: the signed-in operator, or the reference
+   *  footage's own name on hosts and review URLs that never sign in. */
+  private operator = DEFAULT_OPERATOR;
+
+  setOperator(name: string) {
+    this.operator = name.trim() || DEFAULT_OPERATOR;
+  }
   constructor(private stage: HTMLElement) {
     [
       ".access-text",
@@ -110,7 +117,7 @@ export class BootSequence {
     this.accessLettering = new BootLettering(this.el(".access-text"), ["access"]);
     this.authLettering = new BootLettering(this.el("#auth-message"), [
       "identity", "request", "processing", "processingGlitch",
-    ]);
+    ], { identity: OPERATOR_PREFIX });
     for (const [selector, key, text] of [
       [".scan > span", "permission", "PERMISSION AUTHORIZED"],
       [".welcome-heading", "welcome", "WELCOME TO"],
@@ -127,7 +134,7 @@ export class BootSequence {
     this.el(selector).style.opacity = String(Number(value));
   }
   update(time: number) {
-    const s = bootMotion(time),
+    const s = bootMotion(time, this.operator),
       t = s.t;
     this.stage.dataset.bootFrame = String(s.f);
     this.accessLettering.setText(s.access);

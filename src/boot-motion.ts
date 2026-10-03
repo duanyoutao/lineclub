@@ -21,7 +21,13 @@ const accessCounts = [
   1, 1, 3, 4, 5, 6, 9, 11, 12, 14, 17, 18, 19, 20, 22, 23, 25, 26,
 ];
 
-export function bootMotion(appTime: number) {
+/** The name the opening prints when nobody signed in: the reference footage's
+ *  own operator, used by the wallpaper host and every frame-comparison URL. */
+export const DEFAULT_OPERATOR = "JOYCE MOORE";
+/** The authored part of the identity line; everything after it is the operator. */
+export const OPERATOR_PREFIX = "ID CONFIRMED : ";
+
+export function bootMotion(appTime: number, operator: string = DEFAULT_OPERATOR) {
   const t = appTime + 5;
   const f = Math.floor(t * 25 + 0.00001);
   const step =
@@ -37,7 +43,9 @@ export function bootMotion(appTime: number) {
   let auth = "";
   if (f < 363) {
     auth = typed("ID CONFIRMED", f, 282, 295);
-    if (f >= 320) auth += " : " + typed("JOYCE MOORE", f, 321, 339);
+    // The operator is revealed inside the reference's own window, so a longer or
+    // shorter name changes the cadence, never the beat.
+    if (f >= 320) auth += " : " + typed(operator, f, 321, 339);
   } else if (f < 421) auth = typed("REQUEST RECEIVED", f, 367, 389);
   else {
     auth = typed("START PROCESSING", f, 423, 440);

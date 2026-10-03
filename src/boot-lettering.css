@@ -32,6 +32,15 @@
   white-space: pre;
 }
 .boot-phrase-letter:last-child { margin-inline-end: 0; }
+/* The operator run after an authored prefix: same cells, same face, measured at
+   runtime. Long names step down a size so the line keeps its margins. */
+.boot-phrase-tail { display: inline-flex; align-items: stretch; }
+.boot-phrase-tail:not(:has(.boot-phrase-letter)) {
+  font-family: var(--boot-webfont-family, MiSans, sans-serif);
+  white-space: pre;
+}
+#auth-message .boot-phrase[data-tail="medium"] { font-size: 0.88em; }
+#auth-message .boot-phrase[data-tail="long"] { font-size: 0.78em; }
 .boot-phrase[hidden], .boot-phrase-letter[hidden] { display: none; }
 .boot-phrase svg.boot-letter-art {
   display: block;

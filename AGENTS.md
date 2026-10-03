@@ -133,6 +133,7 @@
 - 验证脚本统一用 `scripts/sign-in.mjs` 的 `signIn(page)` 进入终端，凭据从 `content/credentials.json` 读取，不另行硬编码。
 - 壁纸端与带 `scene`／`time` 参数的对照入口跳过登录，与它们原先跳过启动门一致。
 - 登录身份显示在页脚、设置页与档案访问日志中（`sessionName()`），无身份时回退到原来的 `JOYCE MOORE`。
+- 开场身份行 `ID CONFIRMED : <姓名>` 显示本次登录者的 `en`（拉丁名，因为这一行用 Novecento）：`bootMotion(time, operator)` 只换字符串，321–339 的揭示窗口与节奏不变，名字长短只改变每秒出字数；`BootLettering` 改为「烘焙前缀 + 动态尾段」，前缀仍用原 15 格字形，尾段在字体可用时按运行时测量字宽建格、无字体包时降级为文本；打字音效帧表由 `setTypingOperator()` 随名字重建。姓名 >11 字符分档降到 0.88em／>15 字符 0.78em。壁纸端与 `?scene=`／`?time=`／`?review=1` 不登录，仍显示原片原文，逐帧对照与字体分包校验不受影响。见 verification/BOOT-IDENTITY.md。
 
 ## 登录页版式
 

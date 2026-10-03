@@ -1,0 +1,163 @@
+{
+  "medium": "KRISTEN WRIGHT",
+  "longest": "MAYLANDER FOUNDATION",
+  "errors": [],
+  "signedIn": {
+    "samples": [
+      {
+        "at": 12.72,
+        "fallback": false,
+        "staticVisible": 12,
+        "tailKind": null,
+        "tailVisible": null,
+        "scopedSize": null,
+        "fontSize": "21.35px",
+        "right": 912,
+        "viewport": 1600
+      },
+      {
+        "at": 13.08,
+        "fallback": false,
+        "staticVisible": 15,
+        "tailKind": "text",
+        "tailVisible": "KRIS",
+        "scopedSize": "short",
+        "fontSize": "21.35px",
+        "right": 963,
+        "viewport": 1600
+      },
+      {
+        "at": 13.43,
+        "fallback": false,
+        "staticVisible": 15,
+        "tailKind": "text",
+        "tailVisible": "KRISTEN WRI",
+        "scopedSize": "short",
+        "fontSize": "21.35px",
+        "right": 1035,
+        "viewport": 1600
+      },
+      {
+        "at": 14.26,
+        "fallback": false,
+        "staticVisible": 15,
+        "tailKind": "text",
+        "tailVisible": "KRISTEN WRIGHT",
+        "scopedSize": "medium",
+        "fontSize": "18.788px",
+        "right": 1038,
+        "viewport": 1600
+      },
+      {
+        "at": 14.62,
+        "fallback": false,
+        "staticVisible": 15,
+        "tailKind": "text",
+        "tailVisible": "KRISTEN WRIGHT",
+        "scopedSize": "medium",
+        "fontSize": "18.788px",
+        "right": 789,
+        "viewport": 1600
+      },
+      {
+        "at": 14.97,
+        "fallback": false,
+        "staticVisible": 15,
+        "tailKind": "text",
+        "tailVisible": "KRISTEN WRIGHT",
+        "scopedSize": "medium",
+        "fontSize": "18.788px",
+        "right": 847,
+        "viewport": 1600
+      },
+      {
+        "at": 15.32,
+        "fallback": false,
+        "staticVisible": 15,
+        "tailKind": "text",
+        "tailVisible": "KRISTEN WRIGHT",
+        "scopedSize": "medium",
+        "fontSize": "18.788px",
+        "right": 907,
+        "viewport": 1600
+      },
+      {
+        "at": 15.43,
+        "fallback": false,
+        "staticVisible": 15,
+        "tailKind": "text",
+        "tailVisible": "KRISTEN WRIGHT",
+        "scopedSize": "medium",
+        "fontSize": "18.788px",
+        "right": 921,
+        "viewport": 1600
+      },
+      {
+        "at": 15.55,
+        "fallback": false,
+        "staticVisible": 15,
+        "tailKind": "text",
+        "tailVisible": "KRISTEN WRIGHT",
+        "scopedSize": "medium",
+        "fontSize": "18.788px",
+        "right": 944,
+        "viewport": 1600
+      },
+      {
+        "at": 15.66,
+        "fallback": false,
+        "staticVisible": 15,
+        "tailKind": "text",
+        "tailVisible": "KRISTEN WRIGHT",
+        "scopedSize": "medium",
+        "fontSize": "18.788px",
+        "right": 957,
+        "viewport": 1600
+      }
+    ],
+    "tailHistory": [
+      null,
+      null,
+      "KR",
+      "KRIS",
+      "KRISTE",
+      "KRISTEN ",
+      "KRISTEN WRI",
+      "KRISTEN WRIGH",
+      "KRISTEN WRIGHT",
+      "KRISTEN WRIGHT",
+      "KRISTEN WRIGHT",
+      "KRISTEN WRIGHT",
+      "KRISTEN WRIGHT",
+      "KRISTEN WRIGHT",
+      "KRISTEN WRIGHT",
+      "KRISTEN WRIGHT",
+      "KRISTEN WRIGHT",
+      "KRISTEN WRIGHT",
+      "KRISTEN WRIGHT",
+      "KRISTEN WRIGHT",
+      "KRISTEN WRIGHT",
+      "KRISTEN WRIGHT"
+    ]
+  },
+  "longName": {
+    "fallback": false,
+    "staticVisible": 15,
+    "tailKind": "text",
+    "tailVisible": "MAYLANDER FOUNDATION",
+    "scopedSize": "long",
+    "fontSize": "16.653px",
+    "right": 836,
+    "viewport": 1600
+  },
+  "review": {
+    "fallback": false,
+    "staticVisible": 16,
+    "tailKind": null,
+    "tailVisible": null,
+    "scopedSize": null,
+    "fontSize": "21.35px",
+    "right": 933,
+    "viewport": 1600
+  }
+}

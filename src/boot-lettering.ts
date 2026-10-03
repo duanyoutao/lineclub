@@ -31,18 +31,51 @@ export async function loadBootWebfonts() {
 type PhraseKey = keyof typeof artwork;
 const ns = "http://www.w3.org/2000/svg";
 
-/** Fixed phrase reveal cells, backed by licensed webfonts or authored artwork. */
+/** Width of one glyph in the licensed face, in em, measured once per character.
+ *  The authored cells carry widths measured from the same font offline; a
+ *  dynamic operator has to measure at runtime instead of being re-exported. */
+const widths = new Map<string, number>();
+function glyphWidth(character: string, family: string) {
+  const key = `${family}:${character}`;
+  const cached = widths.get(key);
+  if (cached !== undefined) return cached;
+  let width = 0.62;
+  try {
+    if (document.fonts.check(`1em ${family}`)) {
+      const context = document.createElement("canvas").getContext("2d");
+      if (context) {
+        context.font = `1em ${family}`;
+        width = context.measureText(character).width || width;
+      }
+    }
+  } catch {}
+  widths.set(key, width);
+  return width;
+}
+
+/** Fixed phrase reveal cells, backed by licensed webfonts or authored artwork.
+ *  A phrase may name a static prefix; anything typed after it is the operator,
+ *  rendered from the same face instead of being baked into the reference. */
 export class BootLettering {
   private label = document.createElement("span");
   private phrases: {
+    key: PhraseKey;
     text: string;
+    tail?: string;
     node: HTMLSpanElement;
+    tailHost?: HTMLSpanElement;
+    tailCells: HTMLSpanElement[];
     letters: HTMLSpanElement[];
     weight: string;
   }[];
   private value: string | undefined;
+  private webfonts = false;
 
-  constructor(private host: HTMLElement, keys: PhraseKey[]) {
+  constructor(
+    private host: HTMLElement,
+    keys: PhraseKey[],
+    tails: Partial<Record<PhraseKey, string>> = {},
+  ) {
     this.label.className = "boot-phrase-label";
     this.phrases = keys.map((key) => {
       const art = artwork[key];
@@ -69,7 +102,7 @@ export class BootLettering {
         node.append(cell);
         return cell;
       });
-      return { text: art.text, node, letters, weight: art.weight };
+      return { key, text: art.text, tail: tails[key], node, letters, tailCells: [], weight: art.weight };
     });
     host.classList.add("has-boot-lettering");
     host.replaceChildren(this.label, ...this.phrases.map((p) => p.node));
@@ -80,6 +113,7 @@ export class BootLettering {
   useWebfonts() {
     // Retain the measured cells and the reveal timeline. Only the glyph source
     // changes: actual WOFF2 text replaces each pre-authored SVG drawing.
+    this.webfonts = true;
     for (const phrase of this.phrases) {
       phrase.node.style.setProperty("--boot-webfont-family", `"Rhine Novecento ${phrase.weight}"`);
       phrase.letters.forEach((letter, i) => {
@@ -87,7 +121,12 @@ export class BootLettering {
         letter.dataset.letter = phrase.text[i];
         letter.classList.add("boot-font-letter");
       });
+      // A tail built before the font arrived is rebuilt from the face.
+      phrase.tailHost?.remove();
+      phrase.tailHost = undefined;
+      phrase.tailCells = [];
     }
+    this.value = undefined;
     this.host.dataset.letteringRenderer = "webfont";
   }
 
@@ -95,17 +134,70 @@ export class BootLettering {
     if (this.value === value) return;
     this.value = value;
     this.label.textContent = value;
-    const active = value ? this.phrases.find((p) => p.text.startsWith(value)) : undefined;
+    const authored = value ? this.phrases.find((p) => p.text.startsWith(value)) : undefined;
+    // A different operator never matches an authored phrase; it continues from
+    // the phrase's static prefix instead, so the reveal timeline is untouched.
+    const phrase = authored ?? (value ? this.phrases.find((p) => p.tail && value.startsWith(p.tail)) : undefined);
+    const tail = phrase && !authored && phrase.tail ? value.slice(phrase.tail.length) : "";
     // A new, unauthored phrase remains readable until its artwork is exported.
-    this.host.classList.toggle("boot-lettering-fallback", Boolean(value && !active));
-    for (const phrase of this.phrases) {
-      const visible = phrase === active;
-      if (phrase.node.hidden === visible) phrase.node.hidden = !visible;
+    this.host.classList.toggle("boot-lettering-fallback", Boolean(value && !phrase));
+    for (const candidate of this.phrases) {
+      const visible = candidate === phrase;
+      if (candidate.node.hidden === visible) candidate.node.hidden = !visible;
       if (!visible) continue;
-      phrase.letters.forEach((letter, i) => {
-        const hidden = i >= value.length;
+      const staticCells = tail ? candidate.tail!.length : value.length;
+      candidate.letters.forEach((letter, i) => {
+        const hidden = i >= staticCells;
         if (letter.hidden !== hidden) letter.hidden = hidden;
       });
+      this.renderTail(candidate, tail);
     }
+  }
+
+  /** The operator run: measured glyph cells with the licensed kit, plain text
+   *  without it, since the authored artwork only covers the reference name. */
+  private renderTail(phrase: (typeof this.phrases)[number], tail: string) {
+    if (!tail) {
+      if (phrase.tailHost) phrase.tailHost.hidden = true;
+      delete phrase.node.dataset.tail;
+      return;
+    }
+    phrase.node.dataset.tail = tail.length > 15 ? "long" : tail.length > 11 ? "medium" : "short";
+    const reuse = this.webfonts ? phrase.tailCells.length >= tail.length : Boolean(phrase.tailHost);
+    if (phrase.tailHost && reuse) {
+      phrase.tailHost.hidden = false;
+      if (this.webfonts) {
+        phrase.tailCells.forEach((cell, i) => {
+          cell.hidden = i >= tail.length;
+          if (cell.hidden) return;
+          const character = tail[i];
+          if (cell.dataset.letter !== character) {
+            cell.dataset.letter = character;
+            cell.style.width = `${glyphWidth(character, `"Rhine Novecento ${phrase.weight}"`)}em`;
+          }
+        });
+      } else {
+        phrase.tailHost.textContent = tail;
+      }
+      return;
+    }
+    phrase.tailHost?.remove();
+    const host = document.createElement("span");
+    host.className = "boot-phrase-tail";
+    phrase.tailCells = [];
+    if (this.webfonts) {
+      for (const character of tail) {
+        const cell = document.createElement("span");
+        cell.className = "boot-phrase-letter boot-font-letter";
+        cell.dataset.letter = character;
+        cell.style.width = `${glyphWidth(character, `"Rhine Novecento ${phrase.weight}"`)}em`;
+        host.append(cell);
+        phrase.tailCells.push(cell);
+      }
+    } else {
+      host.textContent = tail;
+    }
+    phrase.node.append(host);
+    phrase.tailHost = host;
   }
 }

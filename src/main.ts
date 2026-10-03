@@ -31,6 +31,7 @@ import {
   directorySize,
 } from "./data";
 import { TerminalAudio } from "./audio";
+import { setTypingOperator } from "./typing-rhythm";
 import { audioSettingsMarkup } from "./audio-settings";
 import {
   createMotionPreferences,
@@ -287,9 +288,13 @@ function signInAlreadyEntered() {
   if (!signedIn) return;
   signInHeld = false;
   // The footer names whoever signed in, so the sign-in stays visible after the
-  // fact instead of only gating entry.
+  // fact instead of only gating entry. The opening's identity line follows the
+  // same name, and its typing cues are rebuilt for that length.
   const label = document.getElementById("session-name");
   if (label) label.textContent = signedIn.name;
+  const operator = signedIn.en || signedIn.name;
+  bootSequence.setOperator(operator);
+  setTypingOperator(operator);
   // A restored tab still replays nothing; sign-in only gates access.
   completeStartup(signInSilent, resume?.mode);
 }
