@@ -582,10 +582,22 @@ function enterDirectory(target: EntryTarget) {
   }
   $(".read-file").focus({ preventScroll: true });
 }
+// Following a linked archive out of the register: the overlay finishes its exit
+// first, then the terminal opens that file, so focus and mode stay in order.
+let pendingRecord: string | undefined;
 function openPersonnel() {
   personnel ??= new PersonnelOverlay($("#stage"), () => {
     audio.setScene(mode);
     audio.play("page-close");
+    if (!pendingRecord) return;
+    const index = records.findIndex((record) => record.id === pendingRecord);
+    pendingRecord = undefined;
+    if (index < 0) return;
+    select(index);
+    openFile();
+  }, (id) => {
+    pendingRecord = id;
+    personnel?.close();
   });
   personnel.setMotion(prefs.motion);
   audio.setScene("viewer");

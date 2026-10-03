@@ -181,9 +181,142 @@
   opacity: 0.62;
 }
 
+.personnel-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 372px;
+  min-height: 0;
+}
+
 .personnel-body {
   overflow: auto;
   padding: 0 clamp(24px, 6vw, 104px);
+}
+
+/* The record beside the register: the same "object left, reading right"
+   composition the archive detail uses. */
+.personnel-detail {
+  overflow: auto;
+  padding: 24px 28px 32px;
+  border-left: 1px solid var(--theme-line, #aaa59a);
+  background: var(--theme-field, #dedad1);
+}
+
+.personnel-detail h3 {
+  margin: 10px 0 18px;
+  font-size: 21px;
+  line-height: 1.25;
+}
+
+.personnel-detail h3 small {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  color: var(--theme-muted, #77756d);
+}
+
+.personnel-detail .detail-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--theme-muted, #77756d);
+}
+
+.personnel-detail .detail-index {
+  font-variant-numeric: tabular-nums;
+  color: var(--theme-accent, #9b7247);
+}
+
+.personnel-detail dl {
+  margin: 0;
+  border-top: 1px solid var(--theme-line, #aaa59a);
+}
+
+.personnel-detail dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--theme-line, #aaa59a);
+}
+
+.personnel-detail dt {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--theme-muted, #77756d);
+}
+
+.personnel-detail dd {
+  margin: 0;
+  font-size: 13px;
+  text-align: right;
+}
+
+.personnel-detail .detail-note {
+  margin: 18px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--theme-ink, #20221c);
+}
+
+.personnel-detail .detail-records {
+  margin-top: 22px;
+}
+
+.personnel-detail .detail-records > span {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--theme-muted, #77756d);
+}
+
+.personnel-detail .detail-records > span i {
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.personnel-detail .detail-records > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.personnel-detail .detail-records button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  font: inherit;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  background: none;
+  border: 1px solid var(--theme-line, #aaa59a);
+  color: var(--theme-ink, #20221c);
+  cursor: pointer;
+}
+
+.personnel-detail .detail-records button:hover {
+  border-color: var(--theme-accent, #9b7247);
+  color: var(--theme-accent, #9b7247);
+}
+
+.personnel-detail .detail-records button em {
+  font-style: normal;
+  color: var(--theme-muted, #77756d);
+}
+
+.personnel-detail .detail-empty {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--theme-muted, #77756d);
 }
 
 .personnel-table {
@@ -225,6 +358,57 @@
 
 .personnel-table th.num {
   text-align: right;
+}
+
+/* Sortable headers: the whole cell is the control, the arrow shows direction. */
+.personnel-table th button {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+}
+
+.personnel-table th button:hover {
+  color: var(--theme-ink, #20221c);
+}
+
+.personnel-table th button[aria-pressed="true"] {
+  color: var(--theme-ink, #20221c);
+}
+
+.personnel-table th button i {
+  font-style: normal;
+  font-size: 9px;
+  color: var(--theme-accent, #9b7247);
+}
+
+.personnel-row {
+  cursor: pointer;
+}
+
+.personnel-row:hover td,
+.personnel-row:focus-visible td {
+  background: color-mix(in srgb, var(--theme-accent, #9b7247) 6%, transparent);
+}
+
+.personnel-row.selected td {
+  background: color-mix(in srgb, var(--theme-accent, #9b7247) 11%, transparent);
+}
+
+.personnel-row.selected .name strong {
+  color: var(--theme-ink, #20221c);
+}
+
+.personnel-row:focus-visible {
+  outline: 1px solid var(--theme-accent, #9b7247);
+  outline-offset: -1px;
 }
 
 .personnel-row td {
@@ -365,13 +549,25 @@
     font-size: 13px;
   }
 
-  /* Narrow screens keep the record's identity, duty and files; the two columns
-     that move into the record itself are the descriptive ones. */
+  /* The register keeps identity, duty and files; the record beside it carries
+     the descriptive fields, so nothing is lost on a phone. */
   .personnel-table th:nth-child(4),
   .personnel-row td:nth-child(4),
   .personnel-table th:nth-child(5),
   .personnel-row td:nth-child(5) {
     display: none;
+  }
+
+  /* Narrow screens read as one column: register first, record underneath. */
+  .personnel-main {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    overflow: auto;
+  }
+
+  .personnel-detail {
+    border-left: 0;
+    border-top: 1px solid var(--theme-line, #aaa59a);
   }
 
   .personnel-filters {
