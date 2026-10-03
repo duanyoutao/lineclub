@@ -218,6 +218,29 @@ test("accepts independent filter and column order", () => {
   assert.equal(validateContent(edited), edited);
 });
 const personnel = await loadPersonnel(content);
+const credentials = JSON.parse(
+  await readFile(new URL("../content/credentials.json", import.meta.url), "utf8"),
+);
+test("every person has a usable sign-in account", () => {
+  assert.equal(credentials.length, personnel.personnel.length);
+  const byAccount = new Map(credentials.map((row) => [row.account, row]));
+  assert.equal(byAccount.size, credentials.length, "账号必须唯一");
+  assert.equal(
+    new Set(credentials.map((row) => row.password)).size,
+    credentials.length,
+    "密码必须唯一",
+  );
+  for (const person of personnel.personnel) {
+    const match = credentials.find((item) => item.name === person.name);
+    assert.ok(match, `${person.name} 没有登录账号`);
+    assert.equal(match.id, person.id);
+    assert.equal(match.department, person.department);
+    assert.equal(match.status, person.status);
+    // Accounts are derived from the English name, so they stay typable.
+    assert.match(match.account, /^[a-z0-9]+(\.[a-z0-9]+)*$/);
+    assert.match(match.password, /^\d{6}$/);
+  }
+});
 test("the directory covers every name the archives credit", () => {
   const credited = new Set(content.records.flatMap((r) => leadNames(r.lead)));
   const listed = new Set(personnel.personnel.map((p) => p.name));

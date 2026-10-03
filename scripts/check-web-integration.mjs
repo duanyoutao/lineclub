@@ -3,6 +3,7 @@ import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const { signIn } = await import('./sign-in.mjs');
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
 const context = await browser.newContext({ viewport: { width: 1600, height: 900 } });
 const page = await context.newPage(), errors = [], results = {};
@@ -15,9 +16,9 @@ const close = async () => { await page.locator('[data-action="close-modal"]').cl
 try {
   await page.goto(origin);
   await page.waitForFunction(() => window.rhine?.stats().ready);
-  assert.equal((await stats()).startup, 'waiting');
-  assert.equal(await page.locator('.entry-start').isVisible(), true);
-  await page.locator('.entry-start').click();
+  assert.equal((await stats()).startup, 'sign-in');
+  assert.equal(await page.locator('.login-form').isVisible(), true);
+  await signIn(page);
   await page.waitForFunction(() => window.rhine.stats().startup === 'started');
   await page.evaluate(() => window.rhine.archive());
   await page.waitForTimeout(1000);
@@ -35,9 +36,11 @@ try {
   await close();
   await page.screenshot({ path: 'verification/web-integration/dark-fast.png' });
   await page.reload(); await page.waitForFunction(() => window.rhine?.stats().ready);
-  // A reloaded tab continues in the terminal instead of showing the entry again.
+  // A reloaded tab signs in again, then continues in the terminal without
+  // replaying the opening.
+  await signIn(page);
   assert.equal((await stats()).resumed, 'archive');
-  assert.equal(await page.locator('.entry-start').count(), 0);
+  assert.equal(await page.locator('.login-form').count(), 0);
   await page.waitForFunction(() => window.rhine.stats().startup === 'started');
   await page.evaluate(() => window.rhine.archive()); await page.waitForTimeout(800);
   assert.equal((await stats()).superPerformance, true);

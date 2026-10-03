@@ -4,6 +4,7 @@ import {mkdir, writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE?pathToFileURL(resolve(process.env.PLAYWRIGHT_MODULE)).href:'playwright');
+import { signIn } from './sign-in.mjs';
 const channel=process.env.REVIEW_CHANNEL || 'chrome';
 const browser=await chromium.launch({channel,headless:true,args:process.platform==='win32'?['--use-angle=d3d11','--enable-gpu','--ignore-gpu-blocklist']:[]});
 const report={channel,version:browser.version(),checks:[]};
@@ -12,7 +13,7 @@ try {for(const browserMotion of ['no-preference','reduce']) {
  const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
  const loaded=async()=>{
    await page.waitForFunction(()=>window.rhine?.stats().ready);
-   if(await page.locator('.entry-start').count())await page.locator('.entry-start').click();
+   if(await page.locator('.login-form').count())await signIn(page);
    await page.waitForFunction(()=>!document.querySelector('#loading'));
  };
  await page.goto(process.env.REVIEW_URL || 'http://127.0.0.1:5190/');await loaded();

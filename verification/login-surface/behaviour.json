@@ -1,0 +1,120 @@
+{
+  "what": "src/login.ts 行为契约（重写标记后回归）",
+  "how": "esbuild.transform 逐文件转译 + 手工拼接的临时 harness，在真实 Chrome 里驱动 LoginGate；本机未安装 playwright，故不复用 scripts/check-*.mjs。",
+  "viewport": [
+    1410,
+    805
+  ],
+  "passed": 27,
+  "total": 27,
+  "checks": [
+    {
+      "name": "idle: submit disabled",
+      "ok": true
+    },
+    {
+      "name": "idle: silent hidden",
+      "ok": true
+    },
+    {
+      "name": "idle: form present",
+      "ok": true
+    },
+    {
+      "name": "empty submit: no enter",
+      "ok": true
+    },
+    {
+      "name": "empty submit: failed flag",
+      "ok": true
+    },
+    {
+      "name": "empty submit: status",
+      "ok": true
+    },
+    {
+      "name": "case and space tolerated: enabled",
+      "ok": true
+    },
+    {
+      "name": "verified: enter called once",
+      "ok": true
+    },
+    {
+      "name": "verified: no audio wanted -&gt; silent",
+      "ok": true
+    },
+    {
+      "name": "verified: session identity",
+      "ok": true
+    },
+    {
+      "name": "verified: stored for next visit",
+      "ok": true
+    },
+    {
+      "name": "rejected: no enter",
+      "ok": true
+    },
+    {
+      "name": "rejected: secret cleared",
+      "ok": true
+    },
+    {
+      "name": "rejected: counted",
+      "ok": true
+    },
+    {
+      "name": "demo: expanded",
+      "ok": true
+    },
+    {
+      "name": "demo: three rows",
+      "ok": true
+    },
+    {
+      "name": "demo: fills both fields",
+      "ok": true
+    },
+    {
+      "name": "demo: arms the submit",
+      "ok": true
+    },
+    {
+      "name": "demo: collapsed back",
+      "ok": true
+    },
+    {
+      "name": "audio ok: enter not silent",
+      "ok": true
+    },
+    {
+      "name": "audio refused: enter silent",
+      "ok": true
+    },
+    {
+      "name": "audio error: silent offered",
+      "ok": true
+    },
+    {
+      "name": "audio error: still on the form",
+      "ok": true
+    },
+    {
+      "name": "audio error: cancelled the unlock",
+      "ok": true
+    },
+    {
+      "name": "audio error: label restored",
+      "ok": true
+    },
+    {
+      "name": "audio error: retryable",
+      "ok": true
+    },
+    {
+      "name": "audio error: silent path enters",
+      "ok": true
+    }
+  ]
+}

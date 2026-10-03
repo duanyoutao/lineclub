@@ -4,6 +4,7 @@ import { createServer } from 'node:http';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { signIn } from './sign-in.mjs';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(resolve(process.env.PLAYWRIGHT_MODULE)).href : 'playwright');
 const oldRoot=resolve(process.env.BASELINE_DIST || '.tools/issues-before'),newRoot=resolve('dist');
 const metadata=JSON.parse(await readFile(resolve(newRoot,'pwa-build.json'),'utf8'));
@@ -29,7 +30,7 @@ try {
   deployed=true;
   await page.evaluate(async()=>{await(await navigator.serviceWorker.getRegistration()).update()});
   await page.waitForFunction(async()=>Boolean((await navigator.serviceWorker.getRegistration())?.waiting),null,{timeout:120000});
-  assert.equal(await page.locator('.entry-start').count(),0);
+  assert.equal(await page.locator('.login-form').count(),0);
   await page.locator('#pwa-update-notice [data-pwa-action="update"]').click();await page.waitForLoadState('load');await ready();
   assert.equal(await page.evaluate(()=>window.rhine.stats().startup),'started');
   assert.equal(await page.evaluate(()=>localStorage.getItem('rhine-saved')),'["X-001","X-009"]');
@@ -39,11 +40,11 @@ try {
   report.checks.push('Previous complete release updates atomically; obsolete whole fonts removed; bookmarks and preferences retained');
   // Enable audio only for the next entry, then prove its cached resources work.
   await page.evaluate(()=>{const p=JSON.parse(localStorage.getItem('rhine-settings'));p.sound=true;p.music=true;localStorage.setItem('rhine-settings',JSON.stringify(p))});
-  // This check needs the entry itself, so it starts a fresh tab session; the
+  // This check needs the sign-in itself, so it starts a fresh tab session; the
   // reload below must not resume the open terminal.
   await page.evaluate(()=>sessionStorage.clear());
-  await context.setOffline(true);await page.reload();await page.waitForFunction(()=>window.rhine?.stats().startup==='waiting');
-  await page.locator('.entry-start').click();await ready();
+  await context.setOffline(true);await page.reload();await page.waitForSelector('.login-form');
+  await signIn(page);await ready();
   assert.equal(await page.evaluate(()=>window.rhine.stats().audio.tracks),3);
   await page.locator('.read-file').click();await page.waitForFunction(()=>window.rhine.stats().decryption.clarity===1);
   await page.locator('.viewer-open').click();await page.waitForFunction(()=>JSON.parse(document.querySelector('.model-viewer')?.dataset.stats||'{}').ready);

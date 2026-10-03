@@ -44,7 +44,7 @@ import {
   type MotionPreset,
   type StoredMotion,
 } from "./motion-preferences";
-import { StartupGate } from "./startup";
+import { LoginGate, type Session } from "./login";
 import { readSessionResume, saveSessionResume, type ResumeMode } from "./session-resume";
 import { isWallpaper, wallpaperHost, wallpaperFrame, type WallpaperProperties } from "./wallpaper";
 import "./startup.css";
@@ -102,7 +102,7 @@ $("#stage").innerHTML = `
     <article id="detail-content" class="detail-content"></article>
   </section>
   <div class="powered">POWERED BY <b>RHINE LAB</b><i></i></div>
-  <footer class="system-footer"><span><i class="status-light"></i> SESSION AUTHORIZED${isWallpaper ? '<button type="button" class="three-toggle" data-action="toggle-three" aria-pressed="true" title="卸载三维模型，保留 2D 界面">3D 开启</button>' : ''}</span><span>JOYCE MOORE <i>／</i> <span id="clock">00:00:00</span></span><button data-action="replay" title="重播启动流程">REINITIALIZE ↗</button></footer>
+  <footer class="system-footer"><span><i class="status-light"></i> SESSION AUTHORIZED${isWallpaper ? '<button type="button" class="three-toggle" data-action="toggle-three" aria-pressed="true" title="卸载三维模型，保留 2D 界面">3D 开启</button>' : ''}</span><span><span id="session-name">JOYCE MOORE</span> <i>／</i> <span id="clock">00:00:00</span></span><button data-action="replay" title="重播启动流程">REINITIALIZE ↗</button></footer>
   <div id="pwa-update-notice" class="pwa-update-notice" role="status" hidden><span>新版本已就绪</span><button data-pwa-action="update">更新并重启 ↻</button></div>
   <div id="modal-root"></div><div id="toast" class="toast" role="status"></div>
   <div id="loading" class="loading"><div class="loading-mark">${logo}</div><span>CONNECTING TO INTERNAL DATABASE</span><i></i></div>
@@ -250,18 +250,48 @@ const loading = $("#loading");
 $("#viewport").append(loading);
 $("#stage").inert = true;
 $(".mobile-entry").inert = true;
-const entry = !isWallpaper && !reviewEntry && !resume && (prefs.sound || prefs.music) ? new StartupGate({
-  root: loading,
+// Sign-in replaces the loading screen's entry gesture for web sessions: the
+// credential submit is the user activation that unlocks audio, so identity and
+// audio cost one click instead of two. The wallpaper and review URLs skip both,
+// exactly as they skipped the entry gesture before.
+let signedIn: Session | undefined;
+let signInSilent = false;
+let signInHeld = !isWallpaper && !reviewEntry;
+if (signInHeld) audio.holdForEntry();
+const signIn = !isWallpaper && !reviewEntry ? new LoginGate($("#viewport"), {
+  wantsAudio: prefs.sound || prefs.music,
   unlock: () => audio.unlock(),
   cancel: () => audio.cancelEntry(),
-  start: silent => completeStartup(silent),
+  enter: (session, silent) => {
+    signedIn = session;
+    signInSilent = silent;
+    signInGate?.remove();
+    if (prefs.music && !silent) void audio.prepareMusic().catch(() => { /* Sign-in offers a silent retry. */ });
+    if (ready) signInAlreadyEntered();
+  },
 }) : undefined;
+// The gate removes itself on submit; this alias lets the callback reach it
+// without capturing the const before initialisation.
+const signInGate: LoginGate | undefined = signIn;
+/** Opens the terminal once the visitor is identified and the assets are ready,
+ *  in whichever order those two happen. */
+function signInAlreadyEntered() {
+  if (!signedIn) return;
+  signInHeld = false;
+  // The footer names whoever signed in, so the sign-in stays visible after the
+  // fact instead of only gating entry.
+  const label = document.getElementById("session-name");
+  if (label) label.textContent = signedIn.name;
+  // A restored tab still replays nothing; sign-in only gates access.
+  completeStartup(signInSilent, resume?.mode);
+}
+/** Falls back to the original demo identity for the wallpaper and review URLs,
+ *  which never go through sign-in. */
+function sessionName() {
+  return signedIn?.name ?? "JOYCE MOORE";
+}
 // The directory is a fixed roster, so its nav badge never changes.
 $("#personnel-count").textContent = String(directorySize).padStart(2, "0");
-if (entry) {
-  audio.holdForEntry();
-  if (prefs.music) void audio.prepareMusic().catch(() => { /* Entry offers retry. */ });
-}
 let audioPreview = false, audioPreviewRequest = 0;
 function saveSession() {
   if (!started || isWallpaper || reviewEntry) return;
@@ -629,7 +659,7 @@ function setTab(tab: string, sound = true) {
             .slice(0, 4)
             .map(
               (entry) =>
-                `<div class="log-row"><span>${entry.time}</span><span>JOYCE MOORE</span><b>READ AUTHORIZED</b></div>`,
+                `<div class="log-row"><span>${entry.time}</span><span>${sessionName()}</span><b>READ AUTHORIZED</b></div>`,
             )
             .join(
               "",
@@ -746,7 +776,7 @@ function motionPreferenceNoteMarkup() {
   return `<div id="motion-preference-note" class="motion-preference-note"><p>${motionSummary(prefs.motion)}</p><span>预设：${preset === "full" ? "完整动画" : preset === "reduced" ? "减少动画" : "自定义"} · 选择会保存在本站</span>${allEnabled ? "" : '<button data-action="enable-motion">启用完整动画并重播 ↻</button>'}</div>`;
 }
 function settingsMarkup() {
-  return `<h2>SYSTEM SETTINGS<small>终端偏好设置</small></h2><p class="settings-intro">JOYCE MOORE <span>·</span> SESSION AUTHORIZED</p>${isWallpaper ? '<p class="wallpaper-settings-note">每次启动都会读取 Wallpaper Engine 中的设置。在此修改仅对当前运行生效，无法持久保存；如需保留，请在 Wallpaper Engine 的壁纸属性中调整。</p>' : ""}<div class="settings-list">${themeSettingsMarkup(prefs.colorTheme === "dark")}${!isWallpaper ? `<label><div><strong>SUPER PERFORMANCE</strong><span>降低三维画质和渲染分辨率，保留完整动效；关闭后恢复原画质</span></div><input type="checkbox" data-pref="superPerformance" ${prefs.superPerformance ? "checked" : ""}/><i class="toggle"></i></label>` : ""}${workbench?.settingsMarkup() ?? ""}${audioSettingsMarkup(prefs)}</div>${motionPreferenceNoteMarkup()}${motionSettingsMarkup(prefs.motion, prefs.motionPreset)}${qualityMarkup(prefs.rendering)}${pwaSettingsMarkup()}<div class="settings-shortcuts">${isWallpaper ? '<span>DESKTOP CONTROLS</span><p>拖动阵列或点击界面按钮浏览档案。桌面模式下，方向键与滚轮可能无法传入壁纸。</p>' : '<span>KEYBOARD CONTROLS</span><p><kbd>←</kbd><kbd>→</kbd> 切列 <kbd>↑</kbd><kbd>↓</kbd> 选档 <kbd>ENTER</kbd> 读取 <kbd>/</kbd> 检索 <kbd>ESC</kbd> 返回</p>'}</div><div class="settings-bottom">${!isWallpaper && document.fullscreenEnabled ? '<button data-action="fullscreen">FULLSCREEN <span>↗</span></button>' : ''}<button data-action="restart">REINITIALIZE SYSTEM <span>↻</span></button></div><div class="modal-bottom"><span>ANALYSIS OS / 1.0 · 使用 MiSans 字体（小米） <a href="${assetUrl("fonts/MiSans-license.pdf")}" target="_blank" rel="noopener">字体许可</a></span><span>POWERED BY RHINE LAB</span></div>`;
+  return `<h2>SYSTEM SETTINGS<small>终端偏好设置</small></h2><p class="settings-intro">${sessionName()} <span>·</span> SESSION AUTHORIZED</p>${isWallpaper ? '<p class="wallpaper-settings-note">每次启动都会读取 Wallpaper Engine 中的设置。在此修改仅对当前运行生效，无法持久保存；如需保留，请在 Wallpaper Engine 的壁纸属性中调整。</p>' : ""}<div class="settings-list">${themeSettingsMarkup(prefs.colorTheme === "dark")}${!isWallpaper ? `<label><div><strong>SUPER PERFORMANCE</strong><span>降低三维画质和渲染分辨率，保留完整动效；关闭后恢复原画质</span></div><input type="checkbox" data-pref="superPerformance" ${prefs.superPerformance ? "checked" : ""}/><i class="toggle"></i></label>` : ""}${workbench?.settingsMarkup() ?? ""}${audioSettingsMarkup(prefs)}</div>${motionPreferenceNoteMarkup()}${motionSettingsMarkup(prefs.motion, prefs.motionPreset)}${qualityMarkup(prefs.rendering)}${pwaSettingsMarkup()}<div class="settings-shortcuts">${isWallpaper ? '<span>DESKTOP CONTROLS</span><p>拖动阵列或点击界面按钮浏览档案。桌面模式下，方向键与滚轮可能无法传入壁纸。</p>' : '<span>KEYBOARD CONTROLS</span><p><kbd>←</kbd><kbd>→</kbd> 切列 <kbd>↑</kbd><kbd>↓</kbd> 选档 <kbd>ENTER</kbd> 读取 <kbd>/</kbd> 检索 <kbd>ESC</kbd> 返回</p>'}</div><div class="settings-bottom">${!isWallpaper && document.fullscreenEnabled ? '<button data-action="fullscreen">FULLSCREEN <span>↗</span></button>' : ''}<button data-action="restart">REINITIALIZE SYSTEM <span>↻</span></button></div><div class="modal-bottom"><span>ANALYSIS OS / 1.0 · 使用 MiSans 字体（小米） <a href="${assetUrl("fonts/MiSans-license.pdf")}" target="_blank" rel="noopener">字体许可</a></span><span>POWERED BY RHINE LAB</span></div>`;
 }
 
 document.addEventListener("input", (e) => {
@@ -1241,8 +1271,11 @@ async function start() {
     savePrefs();
     ready = true;
     select(resume?.selected ?? 0);
-    if (entry) entry.ready();
-    else {
+    if (signIn) {
+      // Sign-in can finish before the 3D assets; the opening starts as soon as
+      // both are true.
+      if (ready) signInAlreadyEntered();
+    } else {
       if (isWallpaper) {
         // CEF allows automatic audio; never block the visual on audio policy or decoding.
         await Promise.race([audio.unlock(), new Promise(resolve => setTimeout(resolve, 3000))]);
@@ -1282,7 +1315,7 @@ function completeStartup(silent: boolean, restored?: ResumeMode) {
   setTimeout(() => {
     const restoreFocus = loading.contains(document.activeElement) || document.activeElement === document.body;
     loading.remove();
-    if ((entry || resume) && restoreFocus) {
+    if ((signIn || resume) && restoreFocus) {
       const skip = $("#skip");
       const target = mode === "boot" ? skip.getClientRects().length ? skip : $(".mobile-entry") : $(".read-file");
       target.focus({ preventScroll: true });
@@ -1402,8 +1435,9 @@ Object.assign(window, {
       fps: Math.round(fps),
       mode,
       ready,
-      startup: started ? "started" : entry?.phase ?? "loading",
-      entry: Boolean(entry),
+      startup: started ? "started" : signedIn ? "signed-in" : "sign-in",
+      entry: Boolean(signIn),
+      signedIn: signedIn?.account ?? null,
       resumed: resume?.mode ?? null,
       motion: { reduced: motionIsReduced(), preset: prefs.motionPreset },
       bootTime: mode === "boot" ? started ? (frozenTime ?? performance.now() / 1000 - bootStart) + 5 : 6.76 : null,

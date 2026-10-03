@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE||'playwright');
+import { signIn } from './sign-in.mjs';
 const browser=await chromium.launch({channel:process.env.REVIEW_CHANNEL||'chrome',headless:true});
 const errors=[];
 const watch=page=>page.on('pageerror',error=>errors.push(error.message));
@@ -12,7 +13,7 @@ try {
  const context=await browser.newContext({viewport:{width:1440,height:900},serviceWorkers:'block',reducedMotion:'reduce'});
  await context.addInitScript(()=>{if(!localStorage.getItem('rhine-settings'))localStorage.setItem('rhine-settings',JSON.stringify({reduced:false,superPerformance:true,colorTheme:'dark',sound:false,music:false}));});
  const page=await context.newPage();watch(page);
- const load=async()=>{await page.waitForFunction(()=>window.rhine?.stats().ready);if(await page.locator('.entry-start').count())await page.locator('.entry-start').click();await page.waitForFunction(()=>!document.querySelector('#loading'));};
+ const load=async()=>{await page.waitForFunction(()=>window.rhine?.stats().ready);if(await page.locator('.login-form').count())await signIn(page);await page.waitForFunction(()=>!document.querySelector('#loading'));};
  await page.goto(process.env.REVIEW_URL||'http://127.0.0.1:5190');await load();
  assert.equal((await stats(page)).motion.preset,'full','Saved legacy full overrides system reduce');
  await page.evaluate(()=>window.rhine.archive());await settings(page);

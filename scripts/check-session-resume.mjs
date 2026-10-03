@@ -5,6 +5,7 @@ import { createServer } from 'node:http';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { signIn } from './sign-in.mjs';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(resolve(process.env.PLAYWRIGHT_MODULE)).href : 'playwright');
 const root = resolve('dist');
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.glb': 'model/gltf-binary', '.ogg': 'audio/ogg', '.mp3': 'audio/mpeg', '.txt': 'text/plain' };
@@ -32,25 +33,25 @@ try {
   const page = await context.newPage();
   page.on('pageerror', error => report.errors.push(error.message));
 
-  // A fresh tab keeps the entry: storage is only written after entering.
+  // A fresh tab keeps the sign-in: storage is only written after entering.
   await page.goto(base); await ready(page);
-  assert.equal((await stats(page)).startup, 'waiting');
+  assert.equal((await stats(page)).startup, 'sign-in');
   assert.equal((await stats(page)).resumed, null);
-  assert.equal(await page.locator('.entry-start').isVisible(), true);
-  await page.locator('.entry-start').click(); await started(page);
+  assert.equal(await page.locator('.login-form').isVisible(), true);
+  await signIn(page); await started(page);
   assert.equal((await stats(page)).mode, 'boot');
-  report.checks.push('a fresh tab opens the entry and starts the opening');
+  report.checks.push('a fresh tab asks for credentials and starts the opening');
 
   // Enter the array on another file, then reload like a discarded tab.
   await page.evaluate(() => window.rhine.select(9));
   await page.evaluate(() => window.rhine.archive());
   await page.waitForFunction(() => window.rhine.stats().mode === 'archive');
   const chosen = (await stats(page)).selected;
-  await page.reload(); await ready(page); await started(page);
+  await page.reload(); await ready(page); await signIn(page); await started(page);
   assert.equal((await stats(page)).resumed, 'archive');
   assert.equal((await stats(page)).mode, 'archive');
   assert.equal((await stats(page)).selected, chosen);
-  assert.equal(await page.locator('.entry-start').count(), 0);
+  assert.equal(await page.locator('.login-form').count(), 0);
   assert.equal(await page.locator('#stage').evaluate(el => el.inert), false);
   await page.waitForFunction(() => !document.querySelector('#loading'));
   await page.waitForFunction(() => document.activeElement?.classList.contains('read-file'), null, { timeout: 10000 });
@@ -60,11 +61,11 @@ try {
   await page.evaluate(() => window.rhine.detail());
   await page.waitForFunction(() => window.rhine.stats().mode === 'detail');
   const detailId = (await stats(page)).selected;
-  await page.reload(); await ready(page); await started(page);
+  await page.reload(); await ready(page); await signIn(page); await started(page);
   assert.equal((await stats(page)).resumed, 'detail');
   assert.equal((await stats(page)).mode, 'detail');
   assert.equal((await stats(page)).selected, detailId);
-  assert.equal(await page.locator('.entry-start').count(), 0);
+  assert.equal(await page.locator('.login-form').count(), 0);
   await page.waitForFunction(() => !document.querySelector('#detail-ui').hidden && !document.querySelector('#detail-content').inert);
   report.checks.push({ name: 'reload resumes the open document', selected: detailId });
 
@@ -72,7 +73,7 @@ try {
   try {
     await page.waitForFunction(() => navigator.serviceWorker?.controller && document.documentElement.dataset.offlineReady === 'true', null, { timeout: 180000 });
     await context.setOffline(true);
-    await page.reload(); await ready(page); await started(page);
+    await page.reload(); await ready(page); await signIn(page); await started(page);
     assert.equal((await stats(page)).resumed, 'detail');
     assert.equal((await stats(page)).mode, 'detail');
     report.checks.push('offline reload from the service worker resumes the document');
@@ -86,15 +87,15 @@ try {
   assert.equal((await stats(page)).resumed, null);
   assert.equal((await stats(page)).startup, 'started');
   assert.equal((await stats(page)).mode, 'archive');
-  assert.equal(await page.locator('.entry-start').count(), 0);
-  report.checks.push('a review URL still bypasses the entry and the resume');
+  assert.equal(await page.locator('.login-form').count(), 0);
+  report.checks.push('a review URL still bypasses the sign-in and the resume');
   const other = await context.newPage();
   other.on('pageerror', error => report.errors.push(error.message));
   await other.goto(base); await ready(other);
   assert.equal((await stats(other)).resumed, null);
-  assert.equal(await other.locator('.entry-start').isVisible(), true);
+  assert.equal(await other.locator('.login-form').isVisible(), true);
   await other.close();
-  report.checks.push('a new tab keeps its own session and shows the entry');
+  report.checks.push('a new tab keeps its own session and asks for credentials');
   await context.close();
 
   // Reduced motion has no opening, but still resumes the visible state.
@@ -103,14 +104,14 @@ try {
   const quietPage = await quiet.newPage();
   quietPage.on('pageerror', error => report.errors.push(error.message));
   await quietPage.goto(base); await ready(quietPage);
-  assert.equal(await quietPage.locator('.entry-start').isVisible(), true);
-  await quietPage.locator('.entry-start').click(); await started(quietPage);
+  assert.equal(await quietPage.locator('.login-form').isVisible(), true);
+  await signIn(quietPage); await started(quietPage);
   assert.equal((await stats(quietPage)).mode, 'archive');
   await quietPage.evaluate(() => window.rhine.select(4));
-  await quietPage.reload(); await ready(quietPage); await started(quietPage);
+  await quietPage.reload(); await ready(quietPage); await signIn(quietPage); await started(quietPage);
   assert.equal((await stats(quietPage)).resumed, 'archive');
   assert.equal((await stats(quietPage)).mode, 'archive');
-  assert.equal(await quietPage.locator('.entry-start').count(), 0);
+  assert.equal(await quietPage.locator('.login-form').count(), 0);
   report.checks.push('reduced motion resumes the array without the opening');
   await quiet.close();
 
@@ -121,17 +122,17 @@ try {
   const blockedPage = await blocked.newPage();
   blockedPage.on('pageerror', error => report.errors.push(error.message));
   await blockedPage.goto(base); await ready(blockedPage);
-  assert.equal(await blockedPage.locator('.entry-start').isVisible(), true);
-  await blockedPage.locator('.entry-start').click(); await started(blockedPage);
+  assert.equal(await blockedPage.locator('.login-form').isVisible(), true);
+  await signIn(blockedPage); await started(blockedPage);
   await blockedPage.reload(); await ready(blockedPage);
   assert.equal((await stats(blockedPage)).resumed, null);
-  assert.equal(await blockedPage.locator('.entry-start').isVisible(), true);
-  report.checks.push('blocked session storage falls back to the entry');
+  assert.equal(await blockedPage.locator('.login-form').isVisible(), true);
+  report.checks.push('blocked session storage falls back to the sign-in');
   await blocked.close();
 
   assert.deepEqual(report.errors, []);
   console.log(JSON.stringify(report, null, 2));
-  console.log('Reload resume, document resume, offline resume, review bypass, per-tab sessions, reduced motion and blocked storage passed.');
+  console.log('Sign-in, reload resume, document resume, offline resume, review bypass, per-tab sessions, reduced motion and blocked storage passed.');
 } catch (error) {
   failed = String(error?.message ?? error);
   throw error;

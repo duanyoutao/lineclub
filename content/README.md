@@ -100,12 +100,28 @@
 - 增删人员后要同步检查档案的 `lead`：人员表多一个名字，校验会报「未出现在任何档案的 lead 字段中」；反过来档案里新增的人不建条目也会被拦下。
 - 校验不判断职位与在线状态是否符合设定，这两项属于编目设定，由人工把握。
 
+## 登录凭据
+
+`credentials.json` 是登录页读取的账号表，**由 `personnel.json` 派生，不要手工编辑**。执行 `npm run export:credentials` 重新生成，会同时写出：
+
+- `content/credentials.json`：页面与登录校验读取的机器可读版本。
+- `docs/CREDENTIALS.txt`：带姓名、科室与在线状态的清单，方便直接查看和分发。
+
+派生规则是纯函数，同样的输入永远得到同样的凭据：
+
+- **账号** = 英文名的点分小写形式，如 `kristen.wright`、`engineering.section`。
+- **密码** = 6 位数字，由「姓名 + 科室」的 SHA-256 散列取模得到，如 `874810`。
+
+账号与密码均唯一，校验会检查重复。新增或删除人员后必须重新执行导出，否则登录页会与人员表不一致。
+
+> 本终端是公开演示项目，`credentials.json` 随源码一起提交。它只用于挡下随手点开的访客，**不具备真实的安全强度**；任何真实部署都需要服务端校验与凭据散列存储。
+
 ## 修改与验证
 
 1. 编辑 JSON 中对应档案的字段。修改分类名称时，同时更新 `categories`、`columns` 和各档案的 `category`。改动人员时同步维护 `personnel.json`。
-2. 执行 `npm run export:archives`，校验数据并更新 `public/archives/` 中的下载文件。校验失败时不会写入任何下载文件。
+2. 执行 `npm run export:archives`，校验数据并更新 `public/archives/` 中的下载文件。校验失败时不会写入任何下载文件。改动人员后执行 `npm run export:credentials` 同步登录凭据。
 3. 执行 `npm run check:content` 检查校验规则与下载一致性，再运行 `npm run build` 验证构建。将 JSON 与更新后的 TXT 一起提交。
-4. 在 `npm run dev` 中查看标题、详情、检索和下载结果，尤其检查长标题与较长正文的实际布局。人员表在开场结束后选择「人员表」进入，或从导航栏的 `PERSONNEL` 直接打开。
+4. 在 `npm run dev` 中查看标题、详情、检索和下载结果，尤其检查长标题与较长正文的实际布局。人员表在开场结束后选择「人员表」进入，或从导航栏的 `PERSONNEL` 直接打开。登录页在开场之前，凭据见 `docs/CREDENTIALS.txt`。
 
 `npm run dev` 启动前和 `npm run build` 构建前都会自动校验并导出。开发服务器运行期间，JSON 修改会更新页面；下载文件需再次执行 `npm run export:archives` 或重启开发服务器。
 
