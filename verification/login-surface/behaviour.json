@@ -1,10 +1,6 @@
 {
-  "what": "src/login.ts 行为契约（重写标记后回归）",
+  "what": "src/login.ts 行为契约（版式重做后回归）",
   "how": "esbuild.transform 逐文件转译 + 手工拼接的临时 harness，在真实 Chrome 里驱动 LoginGate；本机未安装 playwright，故不复用 scripts/check-*.mjs。",
-  "viewport": [
-    1410,
-    805
-  ],
   "passed": 27,
   "total": 27,
   "checks": [
@@ -41,7 +37,7 @@
       "ok": true
     },
     {
-      "name": "verified: no audio wanted -&gt; silent",
+      "name": "verified: no audio wanted -> silent",
       "ok": true
     },
     {

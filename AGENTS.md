@@ -137,6 +137,13 @@
 - 底栏左侧 `DEMO ACCESS` 取代参考图的 `REGISTER`（本项目没有注册流程）：展开三条示例账号，点选直接填表，方便访客不离开页面就能进入演示；右侧 `ENTER WITHOUT AUDIO` 仍是声音失败时的无声通道，默认隐藏。完整 26 组凭据仍在 `docs/CREDENTIALS.txt`。
 - 登录页位于 `#stage` 之外，读不到存放「减少动态效果」偏好的 `.reduce-motion` 类，因此只响应系统的 `prefers-reduced-motion`。
 - 用户标注中「参考这个」指的是版式与配色，未要求逐像素复刻；标记、字号、间距均沿用本项目既有规范。
+- **两处按主题分档的强度，不要退回单一数值**：输入框底线用 `--login-rule`（暗色下 `--theme-line` 贴在纸面上几乎不可见，需向 `--theme-muted` 提一档）；标志光晕用 `--login-halo-disc` / `--login-halo-ring`（亮色纸面已经很亮，暗色下合适的 alpha 在这里会读成一块灰斑）。
+- 标题区保持只有 `WELCOME`：不要重新加回 kicker 一类的文字，它会在第一项输入之前堆出第四层字距拉开的文字。
+
+## 构建环境（本机特殊）
+
+- `esbuild.exe` 在**工作区内**读取任何文件都会被拒（`winapi error #5`），复制到工作区之外即正常；`node`、`python` 不受影响。这是执行环境按可执行文件路径拦截，不是项目缺陷。
+- 若在本机遇到 `Cannot read file "package.json"`：`cp node_modules/@esbuild/win32-x64/esbuild.exe "$TEMP/eb/esbuild.exe"`，再以 `ESBUILD_BINARY_PATH` 指向该副本运行 `npm run build`。用户从终端自行构建时不需要这一步。
 
 ## 正式功能提交与同步
 

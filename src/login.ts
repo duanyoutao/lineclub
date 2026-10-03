@@ -86,7 +86,6 @@ export class LoginGate {
       <div class="login-body">
         <div class="login-mark" aria-hidden="true"><span class="login-mark-halo"></span><span class="login-mark-svg">${logo}</span></div>
         <div class="login-main">
-          <p class="login-kicker">RHINE LAB · INTERNAL DATABASE</p>
           <h2 class="login-title" id="login-title">WELCOME<span>身份验证</span></h2>
           <p class="login-lede">使用内部资料终端分配的账号进入。验证通过后开始播放启动流程。</p>
           <form class="login-form" novalidate>
