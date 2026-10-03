@@ -91,7 +91,7 @@
 | `kind`              | `person` 自然人 / `unit` 科室、机构、项目等非自然人署名        |
 | `department`        | 科室；跨科室写法（如 `能量科／联合项目组`）也算一个名称         |
 | `position`          | 职位                                                              |
-| `status`            | `online` / `busy` / `offline`                                     |
+| `status`            | 在编状态：`on-roll` 在编 / `field` 外勤 / `leave` 休假              |
 | `clearance`         | 访问范围，���档案的 `clearance` 用同一套措辞                      |
 | `note`              | 一句话说明，解释同名或跨科室的情况                              |
 | `records`           | 关联档案编号数组；每份档案的 `lead` 里必须确实有这个人          |

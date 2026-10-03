@@ -72,16 +72,12 @@
 .personnel-legend i {
   width: 7px;
   height: 7px;
-  border-radius: 50%;
-  background: var(--theme-line, #aaa59a);
+  border: 1px solid currentColor;
+  background: currentColor;
 }
 
-.personnel-legend [data-legend="online"] i {
-  background: #4f8a5c;
-}
-
-.personnel-legend [data-legend="busy"] i {
-  background: var(--theme-accent, #9b7247);
+.personnel-legend [data-legend="leave"] i {
+  background: none;
 }
 
 .personnel-heading {
@@ -194,6 +190,21 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
+  /* Fixed track widths keep the register dense and aligned instead of letting
+     seven columns spread across the window. */
+  table-layout: fixed;
+}
+
+.personnel-table th:nth-child(1) { width: 150px; }
+.personnel-table th:nth-child(2) { width: 220px; }
+.personnel-table th:nth-child(3) { width: 220px; }
+.personnel-table th:nth-child(4) { width: 170px; }
+.personnel-table th:nth-child(5) { width: 150px; }
+.personnel-table th:nth-child(6) { width: 150px; }
+
+.personnel-table thead th:last-child,
+.personnel-row td:last-child {
+  text-align: right;
 }
 
 .personnel-table th {
@@ -246,7 +257,8 @@
 }
 
 .personnel-row .name small,
-.personnel-row .presence small {
+.personnel-row .presence small,
+.personnel-row .clearance small {
   display: block;
   font-size: 11px;
   letter-spacing: 0.12em;
@@ -262,20 +274,67 @@
   width: 7px;
   height: 7px;
   margin-right: 7px;
-  border-radius: 50%;
-  background: var(--theme-line, #aaa59a);
+  border: 1px solid currentColor;
+  background: currentColor;
   vertical-align: 1px;
 }
 
-.personnel-row[data-status="online"] .presence i {
-  background: #4f8a5c;
+/* Duty reads as an institutional mark, not a chat presence dot: the same square
+   drawn in the theme's own three tones, no separate colour of its own. */
+.personnel-row[data-status="on-roll"] .presence {
+  color: var(--theme-ink, #20221c);
 }
 
-.personnel-row[data-status="busy"] .presence i {
-  background: var(--theme-accent, #9b7247);
+.personnel-row[data-status="field"] .presence {
+  color: var(--theme-accent, #9b7247);
 }
 
-.personnel-row[data-status="offline"] {
+.personnel-row[data-status="leave"] .presence {
+  color: var(--theme-muted, #77756d);
+}
+
+.personnel-row[data-status="leave"] .presence i {
+  background: none;
+}
+
+.personnel-row[data-status="leave"] .name strong {
+  color: var(--theme-muted, #77756d);
+}
+
+.personnel-row .presence small,
+.personnel-row .clearance small {
+  color: var(--theme-muted, #77756d);
+}
+
+.personnel-row .clearance {
+  white-space: nowrap;
+  color: var(--theme-muted, #77756d);
+}
+
+.personnel-section th {
+  padding: 22px 12px 7px;
+  border-bottom: 1px solid var(--theme-line, #aaa59a);
+  font-weight: 400;
+  text-align: left;
+  letter-spacing: 0.22em;
+  color: var(--theme-ink, #20221c);
+}
+
+.personnel-section th span {
+  font-size: 12px;
+}
+
+.personnel-section th small {
+  margin-left: 10px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--theme-muted, #77756d);
+}
+
+.personnel-section th i {
+  float: right;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
   color: var(--theme-muted, #77756d);
 }
 
@@ -306,10 +365,12 @@
     font-size: 13px;
   }
 
+  /* Narrow screens keep the record's identity, duty and files; the two columns
+     that move into the record itself are the descriptive ones. */
   .personnel-table th:nth-child(4),
   .personnel-row td:nth-child(4),
-  .personnel-table th:nth-child(6),
-  .personnel-row td:nth-child(6) {
+  .personnel-table th:nth-child(5),
+  .personnel-row td:nth-child(5) {
     display: none;
   }
 

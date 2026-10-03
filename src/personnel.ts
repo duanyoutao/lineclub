@@ -10,17 +10,27 @@ export interface StaffRecord {
   kind: "person" | "unit";
   department: string;
   position: string;
-  status: "online" | "busy" | "offline";
+  status: "on-roll" | "field" | "leave";
   clearance: string;
   note: string;
   records: string[];
 }
 
+// Duty states of an institution, not the presence dots of a chat client: a
+// roster records whether someone is on the books, out in the field or away.
 const presence: Record<StaffRecord["status"], [string, string]> = {
-  online: ["在线", "ONLINE"],
-  busy: ["忙碌", "IN SESSION"],
-  offline: ["离线", "OFFLINE"],
+  "on-roll": ["在编", "ON-ROLL"],
+  field: ["外勤", "FIELD"],
+  leave: ["休假", "ON LEAVE"],
 };
+
+// The record's own access level, glossed for the table. Both values come from
+// personnel.json; nothing here is invented for the sake of the layout.
+const access: Record<string, [string, string]> = {
+  "REFERENCE AREA": ["可调阅", "REFERENCE"],
+  "CATALOG ONLY": ["仅目录", "CATALOG"],
+};
+const accessLabel = (clearance: string) => access[clearance] ?? [clearance, ""];
 
 /** Full-screen staff directory. Lifecycle mirrors the reading stage: siblings go
  *  inert, the overlay owns focus and Escape, and the exit finishes before focus
@@ -71,12 +81,12 @@ export class PersonnelOverlay {
       </div>
       <div class="personnel-body" tabindex="0">
         <table class="personnel-table">
-          <thead><tr><th class="num">编号</th><th>姓名 / NAME</th><th>科室 / DEPARTMENT</th><th>职位 / POSITION</th><th>状态 / PRESENCE</th><th class="num">档案</th></tr></thead>
+          <thead><tr><th class="num">编目号 / INDEX</th><th>姓名 / NAME</th><th>科室 / DEPARTMENT</th><th>职位 / POSITION</th><th>权限 / ACCESS</th><th>在编状态 / DUTY</th><th class="num">关联档案 / FILES</th></tr></thead>
           <tbody id="personnel-rows"></tbody>
         </table>
         <p class="personnel-empty" id="personnel-empty" hidden>没有匹配的人员。尝试其他姓名、科室或职位。</p>
       </div>
-      <footer class="personnel-footer"><span>姓名取自档案的相关人物字段；职位与在线状态为本终端的编目设定</span><span id="personnel-count"></span></footer>`;
+      <footer class="personnel-footer"><span>姓名取自档案的相关人物字段；职位、在编状态与科室编目为本终端的设定</span><span id="personnel-count"></span></footer>`;
     parent.appendChild(this.root);
     this.body = this.root.querySelector<HTMLElement>(".personnel-body")!;
     this.renderFilters();
@@ -241,7 +251,7 @@ export class PersonnelOverlay {
       )
         return false;
       if (!query) return true;
-      return `${person.name} ${person.en} ${person.department} ${person.position} ${presence[person.status][0]} ${person.records.join(" ")}`
+      return `${person.name} ${person.en} ${person.department} ${person.position} ${presence[person.status][0]} ${person.clearance} ${person.records.join(" ")}`
         .toLowerCase()
         .includes(query);
     });
@@ -251,25 +261,35 @@ export class PersonnelOverlay {
     const rows = this.rows();
     const body = this.root.querySelector<HTMLElement>("#personnel-rows")!;
     const empty = this.root.querySelector<HTMLElement>("#personnel-empty")!;
-    body.innerHTML = rows
-      .map(
-        (person) => `<tr class="personnel-row" data-status="${person.status}">
-        <td class="num id">${escapeHtml(person.id)}</td>
-        <td class="name"><strong>${escapeHtml(person.name)}</strong><small>${escapeHtml(person.en)}${person.kind === "unit" ? " · 团体" : ""}</small></td>
-        <td class="department">${escapeHtml(person.department)}</td>
-        <td class="position">${escapeHtml(person.position)}</td>
-        <td class="presence"><i></i>${presence[person.status][0]}<small>${presence[person.status][1]}</small></td>
-        <td class="num records">${person.records.length ? person.records.map((id) => escapeHtml(id)).join(" ") : "—"}</td>
-      </tr>`,
-      )
-      .join("");
+    // Units and people are two registers in one document, so each gets its own
+    // section header instead of a footnote next to the English name.
+    const section = (title: string, caption: string, list: StaffRecord[]) =>
+      !list.length
+        ? ""
+        : `<tr class="personnel-section"><th colspan="7"><span>${title}</span><small>${caption}</small><i>${String(list.length).padStart(2, "0")}</i></th></tr>${list.map((person) => this.row(person)).join("")}`;
+    body.innerHTML =
+      section("在编人员", "PERSONNEL", rows.filter((p) => p.kind === "person")) +
+      section("所属机构", "UNITS", rows.filter((p) => p.kind === "unit"));
     empty.hidden = rows.length > 0;
     this.root.querySelector<HTMLElement>("#personnel-count")!.textContent =
       `${String(rows.length).padStart(2, "0")} / ${this.staff.length} PERSONNEL`;
-    const online = rows.filter((person) => person.status === "online").length;
-    const busy = rows.filter((person) => person.status === "busy").length;
+    const tally = (status: StaffRecord["status"]) =>
+      rows.filter((person) => person.status === status).length;
     this.root.querySelector("#personnel-summary")!.textContent =
-      `在线 ${online} 人 · 忙碌 ${busy} 人 · 覆盖 ${new Set(rows.map((p) => p.department)).size} 个科室`;
+      `在编 ${tally("on-roll")} · 外勤 ${tally("field")} · 休假 ${tally("leave")} · 覆盖 ${new Set(rows.map((p) => p.department)).size} 个科室`;
+  }
+
+  private row(person: StaffRecord) {
+    const [accessCn, accessEn] = accessLabel(person.clearance);
+    return `<tr class="personnel-row" data-status="${person.status}">
+        <td class="num id">${escapeHtml(person.id)}</td>
+        <td class="name"><strong>${escapeHtml(person.name)}</strong><small>${escapeHtml(person.en)}</small></td>
+        <td class="department">${escapeHtml(person.department)}</td>
+        <td class="position">${escapeHtml(person.position)}</td>
+        <td class="clearance">${escapeHtml(accessCn)}<small>${escapeHtml(accessEn)}</small></td>
+        <td class="presence"><i></i>${presence[person.status][0]}<small>${presence[person.status][1]}</small></td>
+        <td class="num records">${person.records.length ? person.records.map((id) => escapeHtml(id)).join(" ") : "—"}</td>
+      </tr>`;
   }
 
   private keydown(event: KeyboardEvent) {

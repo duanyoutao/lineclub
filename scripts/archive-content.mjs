@@ -235,7 +235,7 @@ const personnelFields = [
   "note",
 ];
 const personnelKinds = ["person", "unit"];
-const personnelStatuses = ["online", "busy", "offline"];
+const personnelStatuses = ["on-roll", "field", "leave"];
 
 /**
  * The directory is a second content file rather than a view over `records`: it

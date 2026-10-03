@@ -1,0 +1,43 @@
+{
+  "info": {
+    "sections": [
+      "在编人员",
+      "所属机构"
+    ],
+    "sectionCounts": [
+      "18",
+      "08"
+    ],
+    "columns": [
+      "编目号 / INDEX",
+      "姓名 / NAME",
+      "科室 / DEPARTMENT",
+      "职位 / POSITION",
+      "权限 / ACCESS",
+      "在编状态 / DUTY",
+      "关联档案 / FILES"
+    ],
+    "rows": 26,
+    "legend": [
+      "ON-ROLL",
+      "FIELD",
+      "ON LEAVE"
+    ],
+    "summary": "在编 11 · 外勤 5 · 休假 10 · 覆盖 13 个科室",
+    "firstRows": [
+      "P-001 Kristen Wright KRISTEN WRIGHT 总辖构件科 创始研究员 可调阅 REFERENCE 在编 ON-ROLL X-001 X-008 X-013 X-032 X-037 X-039",
+      "P-002 Saria SARIA 总辖构件科 创始研究员 可调阅 REFERENCE 在编 ON-ROLL X-001 X-006 X-012 X-013 X-028 X-036"
+    ],
+    "horizontalOverflow": false
+  },
+  "filtered": {
+    "rows": 3,
+    "sections": [
+      "在编人员",
+      "所属机构"
+    ],
+    "summary": "在编 2 · 外勤 0 · 休假 1 · 覆盖 1 个科室"
+  },
+  "searched": 0,
+  "errors": []
+}

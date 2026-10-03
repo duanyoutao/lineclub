@@ -116,8 +116,9 @@
 ## 开场入口与人员名录
 
 - Web 端开场结束后先给出「档案表 / 人员表」两个选择（`src/entry-choice.ts`），不直接进入阵列；壁纸端与带 `scene`／`time` 参数的对照入口仍直达阵列，因为这两类宿主没有可用的指针。开场结束的三条路径统一收敛到 `leaveBoot()`：skip 按钮、ENTER 键、播放到 35 秒。
-- 人员表是全屏浮层（`src/personnel.ts`），沿用阅读器的生命周期：同级节点 inert、浮层独占焦点与 ESC、退出完成后才归还焦点。包含按姓名／科室／职位检索、按科室筛选、在线状态与关联档案编号；亮暗主题跟随 `--theme-*` 变量。
-- 人员数据独立保存在 `content/personnel.json`，姓名取自档案的 `lead` 字段原样（含 `Kristen` 与 `Kristen Wright` 这类同一人异名，差异在 `note` 说明）。职位与在线状态是档案没有的字段，因此不能从 `records` 推导；校验双向核对姓名与关联档案。
+- 人员表是全屏浮层（`src/personnel.ts`），沿用阅读器的生命周期：同级节点 inert、浮层独占焦点与 ESC、退出完成后才归还焦点。包含按姓名／科室／职位检索、按科室筛选、在编状态与关联档案编号；亮暗主题跟随 `--theme-*` 变量。
+- 人员数据独立保存在 `content/personnel.json`，姓名取自档案的 `lead` 字段原样（含 `Kristen` 与 `Kristen Wright` 这类同一人异名，差异在 `note` 说明）。职位与在编状态是档案没有的字段，因此不能从 `records` 推导；校验双向核对姓名与关联档案。
+- 名录按编制文书而非聊天成员列表呈现：在编状态为 `on-roll` 在编 / `field` 外勤 / `leave` 休假（不再使用在线／忙碌／离线的 IM 语义），标记是主题色方块而不是独立的绿色圆点；新增「权限 / ACCESS」列（`personnel.json` 的 `clearance`），自然人与机构拆成「在编人员 / 所属机构」两节，`kind` 由行内注脚升为分节。状态词改了必须重跑 `npm run export:credentials`，`content/credentials.json` 与 `docs/CREDENTIALS.txt` 的文案随之更新。
 - 导航栏 `PERSONNEL` 入口在档案与详情模式下都可直接打开人员表。
 
 ## 登录与凭据

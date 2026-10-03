@@ -249,7 +249,7 @@ test("the directory covers every name the archives credit", () => {
   for (const person of personnel.personnel) {
     assert.ok(person.position.length > 0);
     assert.ok(person.department.length > 0);
-    assert.ok(["online", "busy", "offline"].includes(person.status));
+    assert.ok(["on-roll", "field", "leave"].includes(person.status));
   }
 });
 test("linked archives credit the person they are linked to", () => {

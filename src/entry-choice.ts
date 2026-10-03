@@ -40,7 +40,7 @@ export class EntryChoice {
           </button>
           <button class="entry-choice-option" data-entry="personnel">
             <span class="entry-choice-index">02</span>
-            <span class="entry-choice-body"><strong>人员表</strong><small>PERSONNEL DIRECTORY</small><em>科室与职位 · 在线状态 · 关联档案</em></span>
+            <span class="entry-choice-body"><strong>人员表</strong><small>PERSONNEL DIRECTORY</small><em>科室与职位 · 查阅权限 · 关联档案</em></span>
             <span class="entry-choice-mark">→</span>
           </button>
         </div>

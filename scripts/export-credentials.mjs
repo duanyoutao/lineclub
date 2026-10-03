@@ -33,7 +33,7 @@ function passwordOf(entry) {
   );
 }
 
-const presence = { online: "在线", busy: "忙碌", offline: "离线" };
+const presence = { "on-roll": "在编", field: "外勤", leave: "休假" };
 const credentials = personnel.personnel.map((entry) => ({
   id: entry.id,
   account: accountOf(entry),

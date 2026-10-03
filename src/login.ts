@@ -11,7 +11,7 @@ export interface Session {
   kind: "person" | "unit";
   department: string;
   position: string;
-  status: "online" | "busy" | "offline";
+  status: "on-roll" | "field" | "leave";
 }
 
 type Credential = (typeof credentials)[number];

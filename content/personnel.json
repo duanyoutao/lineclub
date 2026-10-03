@@ -1,5 +1,5 @@
 {
-  "note": "人员名录。姓名取自 archives.json 的 lead 字段，科室与关联档案由该字段反查得到；职位与在线状态为原创编目设定，不冒充游戏原文。修改步骤见 content/README.md。",
+  "note": "人员名录。姓名取自 archives.json 的 lead 字段，科室与关联档案由该字段反查得到；职位与在编状态为原创编目设定，不冒充游戏原文。修改步骤见 content/README.md。",
   "departments": [
     "医疗协作组",
     "医疗数据组",
@@ -36,7 +36,7 @@
       "kind": "person",
       "department": "总辖构件科",
       "position": "创始研究员",
-      "status": "online",
+      "status": "on-roll",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-001",
@@ -55,7 +55,7 @@
       "kind": "person",
       "department": "总辖构件科",
       "position": "创始研究员",
-      "status": "online",
+      "status": "on-roll",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-001",
@@ -74,7 +74,7 @@
       "kind": "person",
       "department": "医疗协作组",
       "position": "临床研究员",
-      "status": "busy",
+      "status": "field",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-003",
@@ -93,7 +93,7 @@
       "kind": "unit",
       "department": "工程科",
       "position": "科室",
-      "status": "online",
+      "status": "on-roll",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-002",
@@ -110,7 +110,7 @@
       "kind": "person",
       "department": "科考科",
       "position": "科考研究员",
-      "status": "offline",
+      "status": "leave",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-010",
@@ -126,7 +126,7 @@
       "kind": "person",
       "department": "工程科",
       "position": "机械工程师",
-      "status": "online",
+      "status": "on-roll",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-007",
@@ -142,7 +142,7 @@
       "kind": "person",
       "department": "生态科",
       "position": "生态研究员",
-      "status": "offline",
+      "status": "leave",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-005",
@@ -158,7 +158,7 @@
       "kind": "person",
       "department": "合作事务组",
       "position": "合作代表",
-      "status": "busy",
+      "status": "field",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-017",
@@ -173,7 +173,7 @@
       "kind": "person",
       "department": "能量科／联合项目组",
       "position": "项目负责人",
-      "status": "online",
+      "status": "on-roll",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-033",
@@ -188,7 +188,7 @@
       "kind": "person",
       "department": "医疗协作组",
       "position": "协调员",
-      "status": "offline",
+      "status": "leave",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-023",
@@ -203,7 +203,7 @@
       "kind": "person",
       "department": "数据资料组",
       "position": "数据研究员",
-      "status": "online",
+      "status": "on-roll",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-011",
@@ -218,7 +218,7 @@
       "kind": "unit",
       "department": "总辖构件科",
       "position": "机构",
-      "status": "online",
+      "status": "on-roll",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-014",
@@ -233,7 +233,7 @@
       "kind": "person",
       "department": "能量科",
       "position": "研究员",
-      "status": "online",
+      "status": "on-roll",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-004"
@@ -247,7 +247,7 @@
       "kind": "person",
       "department": "能量科／联合项目组",
       "position": "创始研究员",
-      "status": "busy",
+      "status": "field",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-033"
@@ -261,7 +261,7 @@
       "kind": "person",
       "department": "源石技艺应用科",
       "position": "研究员",
-      "status": "online",
+      "status": "on-roll",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-034"
@@ -275,7 +275,7 @@
       "kind": "unit",
       "department": "机构沿革组",
       "position": "外部机构",
-      "status": "offline",
+      "status": "leave",
       "clearance": "CATALOG ONLY",
       "records": [
         "X-016"
@@ -289,12 +289,12 @@
       "kind": "unit",
       "department": "合作事务组",
       "position": "外部机构",
-      "status": "online",
+      "status": "on-roll",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-017"
       ],
-      "note": "合作方，在线状态按其公开联络渠道标注。"
+      "note": "合作方，在编状态按其公开联络渠道标注。"
     },
     {
       "id": "P-018",
@@ -303,7 +303,7 @@
       "kind": "unit",
       "department": "工程科",
       "position": "合作实验室",
-      "status": "offline",
+      "status": "leave",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-022"
@@ -317,7 +317,7 @@
       "kind": "unit",
       "department": "能量科",
       "position": "联合项目",
-      "status": "offline",
+      "status": "leave",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-031"
@@ -331,7 +331,7 @@
       "kind": "unit",
       "department": "遗存调查组",
       "position": "调查小组",
-      "status": "busy",
+      "status": "field",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-040"
@@ -345,7 +345,7 @@
       "kind": "person",
       "department": "智能系统科",
       "position": "合作研究员",
-      "status": "offline",
+      "status": "leave",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-041"
@@ -359,7 +359,7 @@
       "kind": "unit",
       "department": "智能系统科",
       "position": "研究团队",
-      "status": "busy",
+      "status": "field",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-041"
@@ -373,7 +373,7 @@
       "kind": "person",
       "department": "智能系统科",
       "position": "合作研究员",
-      "status": "offline",
+      "status": "leave",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-042"
@@ -387,7 +387,7 @@
       "kind": "person",
       "department": "智能系统科",
       "position": "合作研究员",
-      "status": "offline",
+      "status": "leave",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-042"
@@ -401,7 +401,7 @@
       "kind": "person",
       "department": "智能系统科",
       "position": "合作研究员",
-      "status": "offline",
+      "status": "leave",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-042"
@@ -415,7 +415,7 @@
       "kind": "person",
       "department": "智能系统科",
       "position": "项目维护",
-      "status": "online",
+      "status": "on-roll",
       "clearance": "REFERENCE AREA",
       "records": [
         "X-043"
