@@ -1,8 +1,8 @@
 {
   "checks": [
-    "a fresh tab opens the entry and starts the opening",
+    "a fresh tab asks for credentials and starts the opening",
     {
-      "name": "reload resumes the array at the same file",
+      "name": "reload resumes the array at the same file without a second sign-in",
       "selected": "X-010"
     },
     {
@@ -10,10 +10,10 @@
       "selected": "X-010"
     },
     "offline reload from the service worker resumes the document",
-    "a review URL still bypasses the entry and the resume",
-    "a new tab keeps its own session and shows the entry",
+    "a review URL still bypasses the sign-in and the resume",
+    "a new tab keeps its own session and asks for credentials",
     "reduced motion resumes the array without the opening",
-    "blocked session storage falls back to the entry"
+    "blocked session storage falls back to the sign-in"
   ],
   "skipped": [],
   "errors": [],

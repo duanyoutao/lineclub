@@ -421,7 +421,16 @@
 }
 
 /* The gate sits outside #stage, where the stored .reduce-motion class is
-   toggled, so the OS preference is the only signal it can read. */
+   toggled, so the preference is handed over as data-motion and the OS setting
+   stays the fallback. */
+.login[data-motion="reduced"] .login-field input,
+.login[data-motion="reduced"] .login-submit,
+.login[data-motion="reduced"] .login-demo,
+.login[data-motion="reduced"] .login-silent,
+.login[data-motion="reduced"] .login-sample {
+  transition: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .login-field input,
   .login-submit,

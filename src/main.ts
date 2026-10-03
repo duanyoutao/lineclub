@@ -44,7 +44,7 @@ import {
   type MotionPreset,
   type StoredMotion,
 } from "./motion-preferences";
-import { LoginGate, type Session } from "./login";
+import { LoginGate, sessionFor, type Session } from "./login";
 import { readSessionResume, saveSessionResume, type ResumeMode } from "./session-resume";
 import { isWallpaper, wallpaperHost, wallpaperFrame, type WallpaperProperties } from "./wallpaper";
 import "./startup.css";
@@ -256,9 +256,16 @@ $(".mobile-entry").inert = true;
 // exactly as they skipped the entry gesture before.
 let signedIn: Session | undefined;
 let signInSilent = false;
-let signInHeld = !isWallpaper && !reviewEntry;
+// A tab that already signed in and was then reloaded, discarded or brought back
+// from the background keeps its own session record, so it resumes without asking
+// for the credential a second time. A new tab, a review URL and the wallpaper
+// never have that record and keep their old behaviour.
+if (resume) signedIn = sessionFor(resume.account);
+// An unknown account in a stale record falls back to the gate instead of letting
+// the visitor in unidentified.
+let signInHeld = !isWallpaper && !reviewEntry && !signedIn;
 if (signInHeld) audio.holdForEntry();
-const signIn = !isWallpaper && !reviewEntry ? new LoginGate($("#viewport"), {
+const signIn = signInHeld ? new LoginGate($("#viewport"), {
   wantsAudio: prefs.sound || prefs.music,
   unlock: () => audio.unlock(),
   cancel: () => audio.cancelEntry(),
@@ -270,6 +277,7 @@ const signIn = !isWallpaper && !reviewEntry ? new LoginGate($("#viewport"), {
     if (ready) signInAlreadyEntered();
   },
 }) : undefined;
+signIn?.setMotion(!motionActive("surfaceTransitions"));
 // The gate removes itself on submit; this alias lets the callback reach it
 // without capturing the const before initialisation.
 const signInGate: LoginGate | undefined = signIn;
@@ -295,7 +303,7 @@ $("#personnel-count").textContent = String(directorySize).padStart(2, "0");
 let audioPreview = false, audioPreviewRequest = 0;
 function saveSession() {
   if (!started || isWallpaper || reviewEntry) return;
-  saveSessionResume(selected, mode === "detail" ? "detail" : "archive");
+  saveSessionResume(selected, mode === "detail" ? "detail" : "archive", signedIn?.account ?? "");
 }
 let scene: ArchiveScene | undefined;
 let threeState: "on" | "closing" | "off" | "loading" = "on";

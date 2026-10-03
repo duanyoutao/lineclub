@@ -1,5 +1,6 @@
 import credentials from "../content/credentials.json" with { type: "json" };
 import { brandHeading, logo } from "./brand";
+import { escapeHtml } from "./html";
 import "./login.css";
 
 export interface Session {
@@ -15,7 +16,9 @@ export interface Session {
 
 type Credential = (typeof credentials)[number];
 
-const sessionKey = "rhine-session-v1";
+// Only the account is remembered, never the password: the next visit prefills
+// who you are and still asks for the credential.
+const sessionKey = "rhine-last-account";
 const submitLabel = "LOGIN";
 const busyLabel = "PREPARING AUDIO…";
 // A founder, the institute itself and the maintainer: three accounts that read
@@ -38,10 +41,29 @@ function showcase(): Credential[] {
   return picked;
 }
 
+/** The credential row behind an account name, used for the restored-tab path
+ *  and the sign-in itself, so both build the same Session shape. */
+export function sessionFor(account: string): Session | undefined {
+  const match = (credentials as readonly Credential[]).find(
+    (row) => row.account.toLowerCase() === account.trim().toLowerCase(),
+  );
+  if (!match) return undefined;
+  return {
+    id: match.id,
+    account: match.account,
+    name: match.name,
+    en: match.en,
+    kind: match.kind as Session["kind"],
+    department: match.department,
+    position: match.position,
+    status: match.status as Session["status"],
+  };
+}
+
 const showcaseRows = showcase()
   .map(
     (row) =>
-      `<li><button class="login-sample" type="button" data-account="${row.account}"><b>${row.account}</b><i>${row.password}</i><small>${row.name} · ${row.department}</small></button></li>`,
+      `<li><button class="login-sample" type="button" data-account="${escapeHtml(row.account)}"><b>${escapeHtml(row.account)}</b><i>${escapeHtml(row.password)}</i><small>${escapeHtml(row.name)} · ${escapeHtml(row.department)}</small></button></li>`,
   )
   .join("");
 
@@ -143,6 +165,12 @@ export class LoginGate {
     this.account.focus({ preventScroll: true });
   }
 
+  /** The gate lives outside #stage, so the stored motion preference is handed to
+   *  it explicitly instead of being read from the reduce-motion class. */
+  setMotion(reduced: boolean) {
+    this.root.dataset.motion = reduced ? "reduced" : "full";
+  }
+
   remove() {
     this.root.remove();
   }
@@ -181,22 +209,14 @@ export class LoginGate {
   }
 
   private verify(): Session | undefined {
-    const account = this.account.value.trim().toLowerCase();
+    const account = this.account.value.trim();
     const secret = this.secret.value.trim();
     const match = (credentials as readonly Credential[]).find(
-      (row) => row.account.toLowerCase() === account && row.password === secret,
+      (row) =>
+        row.account.toLowerCase() === account.toLowerCase() &&
+        row.password === secret,
     );
-    if (!match) return undefined;
-    return {
-      id: match.id,
-      account: match.account,
-      name: match.name,
-      en: match.en,
-      kind: match.kind as Session["kind"],
-      department: match.department,
-      position: match.position,
-      status: match.status as Session["status"],
-    };
+    return match ? sessionFor(match.account) : undefined;
   }
 
   private async submit() {

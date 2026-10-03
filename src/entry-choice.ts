@@ -13,6 +13,7 @@ export class EntryChoice {
   isOpen = false;
   private root: HTMLElement;
   private transitions: Animation[] = [];
+  private siblings: { node: HTMLElement; inert: boolean }[] = [];
   private closing = false;
   private transitionId = 0;
   private motion: MotionPreferences = fullMotion();
@@ -66,14 +67,17 @@ export class EntryChoice {
     this.closing = false;
     this.root.hidden = false;
     this.root.dataset.transition = "opening";
+    // The array behind is already interactive, so it goes inert for as long as
+    // the choice owns the screen, exactly like the reading stage does.
+    this.siblings = [...this.parent.children]
+      .filter(
+        (node): node is HTMLElement =>
+          node instanceof HTMLElement && node !== this.root,
+      )
+      .map((node) => ({ node, inert: node.inert }));
+    this.siblings.forEach(({ node }) => (node.inert = true));
     this.highlight(0);
     this.enter();
-    requestAnimationFrame(() => {
-      if (this.isOpen && !this.closing)
-        this.root.querySelector<HTMLElement>(".entry-choice-option")?.focus({
-          preventScroll: true,
-        });
-    });
   }
 
   private pick(target: EntryTarget) {
@@ -108,6 +112,8 @@ export class EntryChoice {
     this.root.dataset.transition = "closed";
     this.transitions.forEach((animation) => animation.cancel());
     this.transitions = [];
+    this.siblings.forEach(({ node, inert }) => (node.inert = inert));
+    this.siblings = [];
     this.onPick(target);
   }
 
@@ -184,6 +190,16 @@ export class EntryChoice {
     }
     if (this.closing) {
       event.preventDefault();
+      return;
+    }
+    if (event.key === "Tab") {
+      // Two options only: keep Tab inside the surface instead of letting it walk
+      // into the inerted array behind.
+      const options = this.options();
+      if (!options.length) return;
+      event.preventDefault();
+      const step = event.shiftKey ? -1 : 1;
+      this.highlight(this.focusedIndex() + step);
       return;
     }
     if (event.key === "ArrowDown" || event.key === "ArrowRight") {

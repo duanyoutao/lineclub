@@ -123,7 +123,9 @@
 ## 登录与凭据
 
 - 登录页（`src/login.ts`）取代了原来的启动门 `StartupGate`（已删除）：两者都承担「用户手势 + 声音解锁」，合并成一次点击。**凭据正确但声音失败时不再把访客挡在门外**，而是直接走无声进入；声音解锁失败不是登录失败。
-- 会话恢复路径**恢复前仍需重新登录**：验证身份是进入终端的前提，但登录后不重播开场，直接回到离开时的位置。
+- 同一标签页会话内已经登录过、之后被刷新／回收／从后台恢复时**不再要求重新输入密码**：续看记录 `sessionStorage["rhine-resume"]` 连同账号一起保存，恢复时用 `sessionFor()` 还原身份（页脚、设置页与档案访问日志都显示本人）；记录里的账号若不在凭据清单中，则回退到登录页。新标签页、对照 URL 与壁纸端行为不变。
+- `export:credentials` 已挂进 `predev`／`prebuild`／`build:wallpaper`，派生的 `content/credentials.json` 不再依赖手工重跑。登录页用 `setMotion()` 接收站内「减少动态效果」偏好（`data-motion`），系统 `prefers-reduced-motion` 仍作兜底。
+- 上次登录的账号记在 `localStorage["rhine-last-account"]`（只记账号、不记密码），与续看记录 `rhine-resume` 是两回事，键名不要混用。
 - 凭据由 `content/personnel.json` 派生，`npm run export:credentials` 重新生成 `content/credentials.json` 与 `docs/CREDENTIALS.txt`（供人查看的清单）。账号取英文名的点分小写形式，密码是「姓名+科室」的散列，均为纯函数、结果可复现。**不要手工编辑 credentials.json。**
 - 验证脚本统一用 `scripts/sign-in.mjs` 的 `signIn(page)` 进入终端，凭据从 `content/credentials.json` 读取，不另行硬编码。
 - 壁纸端与带 `scene`／`time` 参数的对照入口跳过登录，与它们原先跳过启动门一致。
@@ -135,7 +137,7 @@
 - 配色随后端主题走，不写死：`paintTheme()` 在构造登录页之前就已写入 `--theme-*`，所以同一套版式在亮色下是浅色版、暗色下即参考图那一版；背景渐变与 `.boot-background` 取同一组数值，登录结束进入开场没有接缝。
 - 左上角标志复用 `.brand` 的既有光学校准（`brandHeading`），只覆写锚点与缩放，避免出现第二份字距参数。
 - 底栏左侧 `DEMO ACCESS` 取代参考图的 `REGISTER`（本项目没有注册流程）：展开三条示例账号，点选直接填表，方便访客不离开页面就能进入演示；右侧 `ENTER WITHOUT AUDIO` 仍是声音失败时的无声通道，默认隐藏。完整 26 组凭据仍在 `docs/CREDENTIALS.txt`。
-- 登录页位于 `#stage` 之外，读不到存放「减少动态效果」偏好的 `.reduce-motion` 类，因此只响应系统的 `prefers-reduced-motion`。
+- 登录页位于 `#stage` 之外，读不到存放「减少动态效果」偏好的 `.reduce-motion` 类，改由 `setMotion()` 写入 `data-motion`；系统 `prefers-reduced-motion` 仍作兜底。
 - 用户标注中「参考这个」指的是版式与配色，未要求逐像素复刻；标记、字号、间距均沿用本项目既有规范。
 - **两处按主题分档的强度，不要退回单一数值**：输入框底线用 `--login-rule`（暗色下 `--theme-line` 贴在纸面上几乎不可见，需向 `--theme-muted` 提一档）；标志光晕用 `--login-halo-disc` / `--login-halo-ring`（亮色纸面已经很亮，暗色下合适的 alpha 在这里会读成一块灰斑）。
 - 标题区保持只有 `WELCOME`：不要重新加回 kicker 一类的文字，它会在第一项输入之前堆出第四层字距拉开的文字。
@@ -304,7 +306,7 @@ WE 画质下拉增加「自定义」，仅此选择且超级模式关闭时显�
 
 用户反馈后台挂太久再切回会回到登录入场而不是离开时的画面。排查确认为浏览器或系统回收后台标签页后整页重载，而进入状态只存在内存，重载必然重播入口与登录入场。
 
-- 按用户选择加入会话记忆：同一标签页会话内刷新、被回收或从后台恢复时恢复当前档案与页面（阵列或详情），新标签页与新会话仍从入口开始，`?scene=`、`?time=`、`?review=1` 对照入口与壁纸构建不受影响。
+- 按用户选择加入会话记忆：同一标签页会话内刷新、被回收或从后台恢复时恢复当前档案与页面（阵列或详情），新标签页与新会话仍从入口开始，`?scene=`、`?time=`、`?review=1` 对照入口与壁纸构建不受影响。记录键名 `rhine-resume`，同时保存登录账号，用于免二次登录。
 - 声音策略未改变，跳过的是入口与开场，仍需第一次点击或按键解锁音频。实现与验证见 verification/SESSION-RESUME.md。
 
 ## 封面标志的闪烁（2026-10-02）

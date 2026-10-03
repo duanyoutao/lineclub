@@ -6,9 +6,9 @@
   "type": "module",
   "scripts": {
     "postinstall": "node scripts/patch-rolling-number.mjs",
-    "predev": "node scripts/patch-rolling-number.mjs && node scripts/export-records.mjs",
+    "predev": "node scripts/patch-rolling-number.mjs && node scripts/export-records.mjs && node scripts/export-credentials.mjs",
     "dev": "vite --host 127.0.0.1",
-    "prebuild": "node scripts/patch-rolling-number.mjs && node scripts/export-records.mjs && node scripts/prepare-webfonts.mjs",
+    "prebuild": "node scripts/patch-rolling-number.mjs && node scripts/export-records.mjs && node scripts/export-credentials.mjs && node scripts/prepare-webfonts.mjs",
     "check:content": "node --experimental-strip-types --test scripts/check-content.mjs",
     "insights:archives": "node scripts/build-archive-insights.mjs",
     "check:viewport": "node --experimental-strip-types scripts/check-viewport.mjs",
@@ -17,7 +17,7 @@
     "export:credentials": "node scripts/export-credentials.mjs",
     "build": "tsc && vite build && node scripts/build-pwa.mjs",
     "build:cloudflare": "npm run build && node scripts/package-cloudflare.mjs",
-    "build:wallpaper": "node scripts/patch-rolling-number.mjs && node scripts/export-records.mjs && tsc && vite build --mode wallpaper --outDir release/wallpaper && node scripts/build-wallpaper.mjs",
+    "build:wallpaper": "node scripts/patch-rolling-number.mjs && node scripts/export-records.mjs && node scripts/export-credentials.mjs && tsc && vite build --mode wallpaper --outDir release/wallpaper && node scripts/build-wallpaper.mjs",
     "format": "prettier --write src scripts index.html package.json tsconfig.json",
     "preview": "vite preview --host 127.0.0.1"
   },
