@@ -1,0 +1,426 @@
+{
+  "note": "人员名录。姓名取自 archives.json 的 lead 字段，科室与关联档案由该字段反查得到；职位与在线状态为原创编目设定，不冒充游戏原文。修改步骤见 content/README.md。",
+  "departments": [
+    "医疗协作组",
+    "医疗数据组",
+    "历史事件组",
+    "合作事务组",
+    "地区资料组",
+    "工程科",
+    "总辖构件科",
+    "数据资料组",
+    "智能系统科",
+    "机构沿革组",
+    "源石技艺应用科",
+    "源石技艺资料组",
+    "生态科",
+    "科研设备研发科",
+    "科考科",
+    "结构科",
+    "联合项目组",
+    "能量科",
+    "能量科／联合项目组",
+    "观星设施资料组",
+    "设备研发组",
+    "遗存调查组",
+    "防卫科",
+    "项目沿革组",
+    "高空研究资料组",
+    "鲁特拉工作室"
+  ],
+  "personnel": [
+    {
+      "id": "P-001",
+      "name": "Kristen Wright",
+      "en": "KRISTEN WRIGHT",
+      "kind": "person",
+      "department": "总辖构件科",
+      "position": "创始研究员",
+      "status": "online",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-001",
+        "X-008",
+        "X-013",
+        "X-032",
+        "X-037",
+        "X-039"
+      ],
+      "note": "与塞雷娅共同创办研究室，机构沿革与对外协作两条线都由她署名。"
+    },
+    {
+      "id": "P-002",
+      "name": "Saria",
+      "en": "SARIA",
+      "kind": "person",
+      "department": "总辖构件科",
+      "position": "创始研究员",
+      "status": "online",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-001",
+        "X-006",
+        "X-012",
+        "X-013",
+        "X-028",
+        "X-036"
+      ],
+      "note": "主管生命科学方向的研究与医疗协作，防卫科档案由她签批。"
+    },
+    {
+      "id": "P-003",
+      "name": "Silence",
+      "en": "SILENCE",
+      "kind": "person",
+      "department": "医疗协作组",
+      "position": "临床研究员",
+      "status": "busy",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-003",
+        "X-012",
+        "X-018",
+        "X-023",
+        "X-025",
+        "X-036"
+      ],
+      "note": "医疗协作组常驻，兼任总辖构件科的跨科署名。"
+    },
+    {
+      "id": "P-004",
+      "name": "Engineering Section",
+      "en": "ENGINEERING SECTION",
+      "kind": "unit",
+      "department": "工程科",
+      "position": "科室",
+      "status": "online",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-002",
+        "X-009",
+        "X-021",
+        "X-030"
+      ],
+      "note": "以科室整体署名，不对应单一自然人。"
+    },
+    {
+      "id": "P-005",
+      "name": "Magallan",
+      "en": "MAGALLAN",
+      "kind": "person",
+      "department": "科考科",
+      "position": "科考研究员",
+      "status": "offline",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-010",
+        "X-020",
+        "X-027"
+      ],
+      "note": "长期在外野作业，档案多由科考科代为提交。"
+    },
+    {
+      "id": "P-006",
+      "name": "Mayer",
+      "en": "MAYER",
+      "kind": "person",
+      "department": "工程科",
+      "position": "机械工程师",
+      "status": "online",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-007",
+        "X-019",
+        "X-029"
+      ],
+      "note": "同时在鲁特拉工作室挂名，装置类项目的技术负责人。"
+    },
+    {
+      "id": "P-007",
+      "name": "Muelsyse",
+      "en": "MUELSYSE",
+      "kind": "person",
+      "department": "生态科",
+      "position": "生态研究员",
+      "status": "offline",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-005",
+        "X-015",
+        "X-026"
+      ],
+      "note": "地区资料组的编目由她建立，多份档案标注跨期汇编。"
+    },
+    {
+      "id": "P-008",
+      "name": "Dorothy",
+      "en": "DOROTHY",
+      "kind": "person",
+      "department": "合作事务组",
+      "position": "合作代表",
+      "status": "busy",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-017",
+        "X-035"
+      ],
+      "note": "负责对外合作与项目沿革的档案整理。"
+    },
+    {
+      "id": "P-009",
+      "name": "Ferdinand",
+      "en": "FERDINAND",
+      "kind": "person",
+      "department": "能量科／联合项目组",
+      "position": "项目负责人",
+      "status": "online",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-033",
+        "X-035"
+      ],
+      "note": "联合项目组的对外联络人。"
+    },
+    {
+      "id": "P-010",
+      "name": "Ifrit",
+      "en": "IFRIT",
+      "kind": "person",
+      "department": "医疗协作组",
+      "position": "协调员",
+      "status": "offline",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-023",
+        "X-036"
+      ],
+      "note": "历史事件组档案的联络人，当前不在终端内。"
+    },
+    {
+      "id": "P-011",
+      "name": "Ptilopsis",
+      "en": "PTILOPSIS",
+      "kind": "person",
+      "department": "数据资料组",
+      "position": "数据研究员",
+      "status": "online",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-011",
+        "X-024"
+      ],
+      "note": "同时负责医疗数据组的结构化整理。"
+    },
+    {
+      "id": "P-012",
+      "name": "Rhine Lab",
+      "en": "RHINE LAB",
+      "kind": "unit",
+      "department": "总辖构件科",
+      "position": "机构",
+      "status": "online",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-014",
+        "X-038"
+      ],
+      "note": "以机构名义署名，用于编目与沿革类档案。"
+    },
+    {
+      "id": "P-013",
+      "name": "Ferdinand Clooney",
+      "en": "FERDINAND CLOONEY",
+      "kind": "person",
+      "department": "能量科",
+      "position": "研究员",
+      "status": "online",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-004"
+      ],
+      "note": "档案中写作全名，与项目沿革组署名的 Ferdinand 为同一人。"
+    },
+    {
+      "id": "P-014",
+      "name": "Kristen",
+      "en": "KRISTEN",
+      "kind": "person",
+      "department": "能量科／联合项目组",
+      "position": "创始研究员",
+      "status": "busy",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-033"
+      ],
+      "note": "档案中写作简称，与机构档案署名的 Kristen Wright 为同一人。"
+    },
+    {
+      "id": "P-015",
+      "name": "Dorothy Franks",
+      "en": "DOROTHY FRANKS",
+      "kind": "person",
+      "department": "源石技艺应用科",
+      "position": "研究员",
+      "status": "online",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-034"
+      ],
+      "note": "档案中写作全名，与合作事务组署名的 Dorothy 为同一人。"
+    },
+    {
+      "id": "P-016",
+      "name": "Maylander Foundation",
+      "en": "MAYLANDER FOUNDATION",
+      "kind": "unit",
+      "department": "机构沿革组",
+      "position": "外部机构",
+      "status": "offline",
+      "clearance": "CATALOG ONLY",
+      "records": [
+        "X-016"
+      ],
+      "note": "外部资助方，仅保留目录访问。"
+    },
+    {
+      "id": "P-017",
+      "name": "Rhodes Island",
+      "en": "RHODES ISLAND",
+      "kind": "unit",
+      "department": "合作事务组",
+      "position": "外部机构",
+      "status": "online",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-017"
+      ],
+      "note": "合作方，在线状态按其公开联络渠道标注。"
+    },
+    {
+      "id": "P-018",
+      "name": "Trimounts Laboratory",
+      "en": "TRIMOUNTS LABORATORY",
+      "kind": "unit",
+      "department": "工程科",
+      "position": "合作实验室",
+      "status": "offline",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-022"
+      ],
+      "note": "装置类项目的外部协作方。"
+    },
+    {
+      "id": "P-019",
+      "name": "Trimounts Project",
+      "en": "TRIMOUNTS PROJECT",
+      "kind": "unit",
+      "department": "能量科",
+      "position": "联合项目",
+      "status": "offline",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-031"
+      ],
+      "note": "以项目整体署名，与合作实验室为不同条目。"
+    },
+    {
+      "id": "P-020",
+      "name": "Investigation Team",
+      "en": "INVESTIGATION TEAM",
+      "kind": "unit",
+      "department": "遗存调查组",
+      "position": "调查小组",
+      "status": "busy",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-040"
+      ],
+      "note": "遗存调查的临时编队，不对应固定成员。"
+    },
+    {
+      "id": "P-021",
+      "name": "梁文锋",
+      "en": "LIANG WENFENG",
+      "kind": "person",
+      "department": "智能系统科",
+      "position": "合作研究员",
+      "status": "offline",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-041"
+      ],
+      "note": "外部合作条目，来源为项目自述档案。"
+    },
+    {
+      "id": "P-022",
+      "name": "研究团队",
+      "en": "RESEARCH TEAM",
+      "kind": "unit",
+      "department": "智能系统科",
+      "position": "研究团队",
+      "status": "busy",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-041"
+      ],
+      "note": "以团队整体署名，与智能系统科的科室条目不同。"
+    },
+    {
+      "id": "P-023",
+      "name": "Tom Preston-Werner",
+      "en": "TOM PRESTON-WERNER",
+      "kind": "person",
+      "department": "智能系统科",
+      "position": "合作研究员",
+      "status": "offline",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-042"
+      ],
+      "note": "外部合作条目，来源为项目自述档案。"
+    },
+    {
+      "id": "P-024",
+      "name": "Chris Wanstrath",
+      "en": "CHRIS WANSTRATH",
+      "kind": "person",
+      "department": "智能系统科",
+      "position": "合作研究员",
+      "status": "offline",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-042"
+      ],
+      "note": "外部合作条目，来源为项目自述档案。"
+    },
+    {
+      "id": "P-025",
+      "name": "PJ Hyett",
+      "en": "PJ HYETT",
+      "kind": "person",
+      "department": "智能系统科",
+      "position": "合作研究员",
+      "status": "offline",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-042"
+      ],
+      "note": "外部合作条目，来源为项目自述档案。"
+    },
+    {
+      "id": "P-026",
+      "name": "LBEILC",
+      "en": "LBEILC",
+      "kind": "person",
+      "department": "智能系统科",
+      "position": "项目维护",
+      "status": "online",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-043"
+      ],
+      "note": "本终端的项目维护者，档案指向公开仓库。"
+    }
+  ]
+}

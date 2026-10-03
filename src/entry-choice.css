@@ -1,0 +1,140 @@
+/* Entry choice: the two directories offered after the opening. It sits over the
+   finished opening rather than the array, so the archive scene is never rebuilt
+   underneath it. Colours follow the live theme variables. */
+.entry-choice {
+  position: absolute;
+  inset: 0;
+  z-index: 33;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--theme-paper, #e8e5e1) 82%, transparent);
+  backdrop-filter: blur(6px);
+  color: var(--theme-ink, #20221c);
+}
+
+.entry-choice[hidden] {
+  display: none;
+}
+
+.entry-choice[data-motion="reduced"] {
+  backdrop-filter: none;
+}
+
+.entry-choice-inner {
+  width: min(560px, 100%);
+  border: 1px solid var(--theme-line, #aaa59a);
+  background: var(--theme-paper, #e8e5e1);
+  padding: 28px clamp(20px, 4vw, 34px) 22px;
+}
+
+.entry-choice-kicker {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.26em;
+  color: var(--theme-muted, #77756d);
+}
+
+.entry-choice-title {
+  margin: 8px 0 22px;
+  font-size: clamp(19px, 2.6vw, 24px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.entry-choice-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.entry-choice-option {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 15px 16px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 1px solid var(--theme-line, #aaa59a);
+  cursor: pointer;
+  transition:
+    background 0.16s,
+    border-color 0.16s;
+}
+
+.entry-choice-option:hover,
+.entry-choice-option[aria-current="true"] {
+  border-color: var(--theme-ink, #20221c);
+  background: color-mix(in srgb, var(--theme-accent, #9b7247) 10%, transparent);
+}
+
+.entry-choice-option:focus-visible {
+  outline: 1px solid var(--theme-accent, #9b7247);
+  outline-offset: 2px;
+}
+
+.entry-choice-option[data-motion="reduced"],
+.entry-choice[data-motion="reduced"] .entry-choice-option {
+  transition: none;
+}
+
+.entry-choice-index {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--theme-accent, #9b7247);
+  font-variant-numeric: tabular-nums;
+}
+
+.entry-choice-body {
+  flex: 1;
+  display: block;
+  min-width: 0;
+}
+
+.entry-choice-body strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.entry-choice-body small {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--theme-muted, #77756d);
+}
+
+.entry-choice-body em {
+  display: block;
+  margin-top: 3px;
+  font-style: normal;
+  font-size: 12px;
+  color: var(--theme-muted, #77756d);
+}
+
+.entry-choice-mark {
+  font-size: 20px;
+  color: var(--theme-muted, #77756d);
+}
+
+.entry-choice-option[aria-current="true"] .entry-choice-mark {
+  color: var(--theme-accent, #9b7247);
+}
+
+.entry-choice-hint {
+  margin: 20px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--theme-muted, #77756d);
+}
+
+.entry-choice-hint kbd {
+  font: inherit;
+  font-size: 10px;
+  padding: 1px 5px;
+  border: 1px solid var(--theme-line, #aaa59a);
+}

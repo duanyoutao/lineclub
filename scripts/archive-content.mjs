@@ -40,7 +40,8 @@ const publicDir = fileURLToPath(new URL("../public/", import.meta.url));
 function markupErrors(value, label, errors) {
   if (typeof value !== "string") return;
   if (
-    (value.match(/\]\(/g) ?? []).length !== (value.match(linkMarkup) ?? []).length
+    (value.match(/\]\(/g) ?? []).length !==
+    (value.match(linkMarkup) ?? []).length
   ) {
     errors.push(
       `${label}：超链接须写成 [文字](https://…) 形式，暂不支持其他链接写法`,
@@ -183,7 +184,9 @@ export function validateContent(content) {
           `${label}.substrate：必须是 public/ 下 marks/ 目录中的图片路径`,
         );
       } else if (!existsSync(path.join(publicDir, record.substrate))) {
-        errors.push(`${label}.substrate：找不到文件 public/${record.substrate}`);
+        errors.push(
+          `${label}.substrate：找不到文件 public/${record.substrate}`,
+        );
       }
     }
   });
@@ -211,6 +214,125 @@ export async function loadContent() {
   );
 }
 
+/** Splits a record's `lead` field the way the directory does, so a person entry
+ *  can be traced back to the archives that name them. */
+export function leadNames(lead) {
+  return String(lead)
+    .split(/\s*(?:\/|／|、|,|，|&)\s*/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+}
+
+const personnelFields = [
+  "id",
+  "name",
+  "en",
+  "kind",
+  "department",
+  "position",
+  "status",
+  "clearance",
+  "note",
+];
+const personnelKinds = ["person", "unit"];
+const personnelStatuses = ["online", "busy", "offline"];
+
+/**
+ * The directory is a second content file rather than a view over `records`: it
+ * adds position and presence, which no archive field carries. Names and linked
+ * archives are still checked against the shared content so the two files cannot
+ * drift apart silently.
+ */
+export function validatePersonnel(personnel, content) {
+  const errors = [];
+  if (!personnel || typeof personnel !== "object" || Array.isArray(personnel)) {
+    throw new Error("人员数据必须是 JSON 对象。");
+  }
+  const list = Array.isArray(personnel.personnel) ? personnel.personnel : [];
+  if (!list.length) errors.push("personnel：至少需要一名人员");
+  if (
+    !Array.isArray(personnel.departments) ||
+    !personnel.departments.length ||
+    !personnel.departments.every(isText)
+  ) {
+    errors.push("departments：必须是非空科室名称数组");
+  }
+  const departments = new Set(
+    Array.isArray(personnel.departments) ? personnel.departments : [],
+  );
+  const records = Array.isArray(content?.records) ? content.records : [];
+  const recordIds = new Set(records.map((record) => record?.id));
+  const archiveLeads = new Set(
+    records.flatMap((record) => leadNames(record?.lead ?? "")),
+  );
+  const seenIds = new Set();
+  const seenNames = new Set();
+  list.forEach((person, index) => {
+    const label = `personnel[${index}]`;
+    if (!person || typeof person !== "object" || Array.isArray(person)) {
+      errors.push(`${label}：必须是人员对象`);
+      return;
+    }
+    for (const key of personnelFields) {
+      if (!isText(person[key])) errors.push(`${label}.${key}：必须是非空文本`);
+    }
+    const expectedId = `P-${String(index + 1).padStart(3, "0")}`;
+    if (person.id !== expectedId)
+      errors.push(`${label}.id：应为 ${expectedId}，编号须按顺序保持稳定`);
+    if (seenIds.has(person.id))
+      errors.push(`${label}.id：重复编号 ${person.id}`);
+    seenIds.add(person.id);
+    if (seenNames.has(person.name))
+      errors.push(`${label}.name：重复姓名 ${person.name}，请合并为一条`);
+    seenNames.add(person.name);
+    if (!personnelKinds.includes(person.kind))
+      errors.push(`${label}.kind：只能是 ${personnelKinds.join(" 或 ")}`);
+    if (!personnelStatuses.includes(person.status))
+      errors.push(`${label}.status：只能是 ${personnelStatuses.join("、")}`);
+    if (!departments.has(person.department))
+      errors.push(
+        `${label}.department：未在 departments 中声明 ${person.department}`,
+      );
+    // A directory entry with no archive behind it is either a typo or a record
+    // waiting to be written; either way the catalogue should notice.
+    if (archiveLeads.size && !archiveLeads.has(person.name))
+      errors.push(
+        `${label}.name：${person.name} 未出现在任何档案的 lead 字段中`,
+      );
+    if (person.records !== undefined && !Array.isArray(person.records))
+      errors.push(`${label}.records：必须是档案编号数组`);
+    for (const [position, id] of (person.records ?? []).entries()) {
+      const where = `${label}.records[${position}]`;
+      if (!isText(id)) {
+        errors.push(`${where}：必须是非空文本`);
+        continue;
+      }
+      if (!recordIds.has(id)) {
+        errors.push(`${where}：找不到档案 ${id}`);
+        continue;
+      }
+      const record = records.find((item) => item?.id === id);
+      if (!leadNames(record.lead).includes(person.name))
+        errors.push(`${where}：档案 ${id} 的 lead 字段中没有 ${person.name}`);
+    }
+  });
+  if (errors.length)
+    throw new Error(`人员数据校验失败：\n- ${errors.join("\n- ")}`);
+  return personnel;
+}
+
+export async function loadPersonnel(content) {
+  return validatePersonnel(
+    JSON.parse(
+      await fs.readFile(
+        new URL("../content/personnel.json", import.meta.url),
+        "utf8",
+      ),
+    ),
+    content ?? (await loadContent()),
+  );
+}
+
 /** Downloadable files are plain text, so markup is unwrapped and links keep
  *  their target visible. */
 export function plainText(value) {
@@ -224,7 +346,8 @@ export function plainText(value) {
 /** One chapter as downloadable plain text; figures keep their path visible. */
 function sectionText(section) {
   const lines = [`【${section.heading}】`];
-  for (const paragraph of section.paragraphs ?? []) lines.push(plainText(paragraph));
+  for (const paragraph of section.paragraphs ?? [])
+    lines.push(plainText(paragraph));
   for (const point of section.points ?? []) lines.push(`· ${plainText(point)}`);
   for (const figure of section.figures ?? []) {
     lines.push(

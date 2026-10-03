@@ -28,6 +28,7 @@ import {
   archiveColumns,
   columnFiles,
   fileLocation,
+  directorySize,
 } from "./data";
 import { TerminalAudio } from "./audio";
 import { audioSettingsMarkup } from "./audio-settings";
@@ -53,6 +54,10 @@ let workbench: Workbench | undefined;
 import { ArchivePlayground } from "./archive-playground";
 import { ARRAY_OPENING_END, openingShowsDetail } from "./wallpaper-opening";
 import { paintTheme, themeSettingsMarkup } from "./theme-ui";
+import { PersonnelOverlay } from "./personnel";
+import { EntryChoice, type EntryTarget } from "./entry-choice";
+let personnel: PersonnelOverlay | undefined;
+let entryChoice: EntryChoice | undefined;
 let playground: ArchivePlayground | undefined;
 import { WallpaperEffects } from "./wallpaper-effects";
 import { WallpaperBackground } from "./wallpaper-background";
@@ -69,6 +74,7 @@ $("#stage").innerHTML = `
   <header class="brand">${brandHeading}</header>
   <nav class="system-nav" aria-label="系统导航">
     <button data-action="search"><span class="nav-glyph">⌕</span> ARCHIVE INDEX <span class="key">/</span></button>
+    <button data-action="personnel" aria-label="查看人员名录" title="人员名录">☰ PERSONNEL <span id="personnel-count">00</span></button>
     <button data-action="saved" aria-label="查看收藏档案" title="收藏档案">＋ SAVED <span id="saved-count">00</span></button>
     <button class="settings-button" data-action="settings" aria-label="系统设置" title="系统设置"><span class="settings-glyph" aria-hidden="true">◷</span><span class="settings-label">设置</span></button>
   </nav>
@@ -250,6 +256,8 @@ const entry = !isWallpaper && !reviewEntry && !resume && (prefs.sound || prefs.m
   cancel: () => audio.cancelEntry(),
   start: silent => completeStartup(silent),
 }) : undefined;
+// The directory is a fixed roster, so its nav badge never changes.
+$("#personnel-count").textContent = String(directorySize).padStart(2, "0");
 if (entry) {
   audio.holdForEntry();
   if (prefs.music) void audio.prepareMusic().catch(() => { /* Entry offers retry. */ });
@@ -512,6 +520,39 @@ function replayBootAfterModal(forcePreview: boolean) {
   selected = 0;
   updateSelection();
   if (!forcePreview) audio.play("ui-tick");
+}
+/**
+ * Leaves the opening. Web sessions offer the two directories first; the
+ * wallpaper and any deterministic review entry go straight to the array, since
+ * neither has a usable pointer for the choice.
+ */
+function leaveBoot() {
+  if (mode !== "boot") return;
+  if (isWallpaper || reviewEntry) {
+    setMode("archive");
+    return;
+  }
+  entryChoice ??= new EntryChoice($("#stage"), (target) => enterDirectory(target));
+  entryChoice.setMotion(prefs.motion);
+  setMode("archive");
+  entryChoice.open();
+}
+function enterDirectory(target: EntryTarget) {
+  if (target === "personnel") {
+    openPersonnel();
+    return;
+  }
+  $(".read-file").focus({ preventScroll: true });
+}
+function openPersonnel() {
+  personnel ??= new PersonnelOverlay($("#stage"), () => {
+    audio.setScene(mode);
+    audio.play("page-close");
+  });
+  personnel.setMotion(prefs.motion);
+  audio.setScene("viewer");
+  audio.play("page-open");
+  personnel.open();
 }
 function openFile() {
   if (!ready) return;
@@ -812,8 +853,11 @@ document.addEventListener("click", (e) => {
   if (action === "toggle-three") { void toggleThree(); return; }
   if (action === "sound-preview") audio.play("confirm");
   if (action === "skip") {
-    setMode("archive");
+    leaveBoot();
     audio.play("confirm");
+  }
+  if (action === "personnel") {
+    openPersonnel();
   }
   if (action === "prev") stepFile(-1);
   if (action === "next") stepFile(1);
@@ -960,7 +1004,7 @@ document.addEventListener("keydown", (e) => {
       (document.activeElement as HTMLElement)?.dataset.select)
   ) {
     e.preventDefault();
-    if (mode === "boot") setMode("archive");
+    if (mode === "boot") leaveBoot();
     else if (mode === "archive") openFile();
   }
 });
@@ -1012,7 +1056,7 @@ function bootFrame(t: number) {
     lift = ease((t - 26) / 1.8),
     zoom = 0.55 * ease((t - 27.3) / 1.65) + 0.45 * ease((t - 29.0) / 5.0);
   if (t >= 35) {
-    setMode("detail");
+    leaveBoot();
     return undefined;
   }
   return { reveal, lift, zoom, time: t };

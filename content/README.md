@@ -1,6 +1,6 @@
 # 修改档案内容
 
-[`archives.json`](archives.json) 是页面与 TXT 下载共用的档案数据。修改内容无需编辑 TypeScript；`src/data.ts` 只保留类型和阵列位置映射。
+[`archives.json`](archives.json) 是页面与 TXT 下载共用的档案数据；[`personnel.json`](personnel.json) 是人员名录。修改内容无需编辑 TypeScript；`src/data.ts` 只保留类型和阵列位置映射，`src/personnel.ts` 只负责渲染。
 
 ## 文件结构
 
@@ -74,12 +74,38 @@
 
 上表中除 `sections` 外均必填，文本不能只包含空白。引号按 JSON 规则写为 `\"`，换行写为转义形式。保留公开设定的来源，区分档案式改写与游戏原文。
 
+## 人员名录
+
+`personnel.json` 是开场后「人员表」视图的数据。它是独立文件而不是从 `records` 算出来的视图，因为**职位与在线状态是档案里没有的字段**；但姓名与关联档案仍必须与档案一致，校验会双向核对。
+
+| 字段                   | 内容                                                          |
+| ---------------------- | ------------------------------------------------------------- |
+| `note`                 | 本文件说明，不参与渲染                                        |
+| `departments`          | 全部科室名称；人员的 `department` 必须在此声明过              |
+| `personnel`            | 全部人员，编号从 `P-001` 起连续排列                          |
+
+| 字段                | 内容                                                             |
+| ------------------- | ---------------------------------------------------------------- |
+| `id`                | 稳定编号，从 `P-001` 起连续                                      |
+| `name`、`en`        | 姓名与拉丁转写；`name` 须与某份档案 `lead` 字段中的写法完全一致 |
+| `kind`              | `person` 自然人 / `unit` 科室、机构、项目等非自然人署名        |
+| `department`        | 科室；跨科室写法（如 `能量科／联合项目组`）也算一个名称         |
+| `position`          | 职位                                                              |
+| `status`            | `online` / `busy` / `offline`                                     |
+| `clearance`         | 访问范围，���档案的 `clearance` 用同一套措辞                      |
+| `note`              | 一句话说明，解释同名或跨科室的情况                              |
+| `records`           | 关联档案编号数组；每份档案的 `lead` 里必须确实有这个人          |
+
+- 姓名按 `lead` 原样保留，包括简称。`Kristen` 与 `Kristen Wright`、`Ferdinand` 与 `Ferdinand Clooney`、`Dorothy` 与 `Dorothy Franks` 是同一人，**在数据里仍是不同条目**，在 `note` 里互相说明。统一写法会让档案的署名失真。
+- 增删人员后要同步检查档案的 `lead`：人员表多一个名字，校验会报「未出现在任何档案的 lead 字段中」；反过来档案里新增的人不建条目也会被拦下。
+- 校验不判断职位与在线状态是否符合设定，这两项属于编目设定，由人工把握。
+
 ## 修改与验证
 
-1. 编辑 JSON 中对应档案的字段。修改分类名称时，同时更新 `categories`、`columns` 和各档案的 `category`。
+1. 编辑 JSON 中对应档案的字段。修改分类名称时，同时更新 `categories`、`columns` 和各档案的 `category`。改动人员时同步维护 `personnel.json`。
 2. 执行 `npm run export:archives`，校验数据并更新 `public/archives/` 中的下载文件。校验失败时不会写入任何下载文件。
 3. 执行 `npm run check:content` 检查校验规则与下载一致性，再运行 `npm run build` 验证构建。将 JSON 与更新后的 TXT 一起提交。
-4. 在 `npm run dev` 中查看标题、详情、检索和下载结果，尤其检查长标题与较长正文的实际布局。
+4. 在 `npm run dev` 中查看标题、详情、检索和下载结果，尤其检查长标题与较长正文的实际布局。人员表在开场结束后选择「人员表」进入，或从导航栏的 `PERSONNEL` 直接打开。
 
 `npm run dev` 启动前和 `npm run build` 构建前都会自动校验并导出。开发服务器运行期间，JSON 修改会更新页面；下载文件需再次执行 `npm run export:archives` 或重启开发服务器。
 

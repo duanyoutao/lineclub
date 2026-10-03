@@ -3,8 +3,11 @@ import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 import {
   loadContent,
+  loadPersonnel,
   validateContent,
+  validatePersonnel,
   archiveText,
+  leadNames,
   plainText,
 } from "./archive-content.mjs";
 import { escapeHtml, richBlocks, richText } from "../src/html.ts";
@@ -214,6 +217,95 @@ test("accepts independent filter and column order", () => {
   edited.categories.reverse();
   assert.equal(validateContent(edited), edited);
 });
+const personnel = await loadPersonnel(content);
+test("the directory covers every name the archives credit", () => {
+  const credited = new Set(content.records.flatMap((r) => leadNames(r.lead)));
+  const listed = new Set(personnel.personnel.map((p) => p.name));
+  assert.deepEqual([...credited].sort(), [...listed].sort());
+  // The directory adds fields no archive carries, so presence has to be declared.
+  for (const person of personnel.personnel) {
+    assert.ok(person.position.length > 0);
+    assert.ok(person.department.length > 0);
+    assert.ok(["online", "busy", "offline"].includes(person.status));
+  }
+});
+test("linked archives credit the person they are linked to", () => {
+  for (const person of personnel.personnel) {
+    for (const id of person.records ?? []) {
+      const record = content.records.find((r) => r.id === id);
+      assert.ok(record, `${person.name} 指向不存在的 ${id}`);
+      assert.ok(
+        leadNames(record.lead).includes(person.name),
+        `${id} 的 lead 中没有 ${person.name}`,
+      );
+    }
+  }
+});
+const personnelCases = [
+  [
+    "unknown department",
+    (p) => {
+      p.personnel[0].department = "不存在的科";
+    },
+    /未在 departments 中声明/,
+  ],
+  [
+    "unknown status",
+    (p) => {
+      p.personnel[0].status = "away";
+    },
+    /status/,
+  ],
+  [
+    "unknown kind",
+    (p) => {
+      p.personnel[0].kind = "robot";
+    },
+    /kind/,
+  ],
+  [
+    "name absent from the archives",
+    (p) => {
+      p.personnel[0].name = "凭空出现的人";
+    },
+    /未出现在任何档案/,
+  ],
+  [
+    "duplicate name",
+    (p) => {
+      p.personnel[1].name = p.personnel[0].name;
+    },
+    /重复姓名/,
+  ],
+  [
+    "reordered id",
+    (p) => {
+      [p.personnel[0], p.personnel[1]] = [p.personnel[1], p.personnel[0]];
+    },
+    /P-001/,
+  ],
+  [
+    "linked archive without the person",
+    (p) => {
+      p.personnel[0].records = [content.records.at(-1).id];
+    },
+    /lead 字段中没有/,
+  ],
+  [
+    "linked archive that does not exist",
+    (p) => {
+      p.personnel[0].records = ["X-999"];
+    },
+    /找不到档案/,
+  ],
+];
+for (const [name, mutate, error] of personnelCases) {
+  test(`rejects personnel ${name}`, () => {
+    const invalid = structuredClone(personnel);
+    mutate(invalid);
+    assert.throws(() => validatePersonnel(invalid, content), error);
+  });
+}
 test("plain-text punctuation stays literal in HTML and downloadable text", () => {
   const title = `<玻璃> & "实验" 'A'`;
   const edited = structuredClone(content);
@@ -254,7 +346,10 @@ test("chapters and figures carry into the downloadable text", () => {
   assert.ok(text.includes(`【${record.sections[0].heading}】`));
   for (const section of record.sections)
     for (const figure of section.figures ?? [])
-      assert.ok(text.includes(figure.src), `${figure.src} is listed in the text`);
+      assert.ok(
+        text.includes(figure.src),
+        `${figure.src} is listed in the text`,
+      );
 });
 test("records without chapters keep their previous download text", () => {
   const plain = content.records.find((r) => !r.sections);

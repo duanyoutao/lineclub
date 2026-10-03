@@ -1,0 +1,319 @@
+/* Personnel directory: same surface language as the reading stage, so the
+   directory reads as another terminal document rather than a separate product.
+   Colours come from the live theme variables so light/dark both work. */
+.personnel {
+  position: absolute;
+  inset: 0;
+  z-index: 32;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  overflow: hidden;
+  background: var(--theme-paper, #e8e5e1);
+  color: var(--theme-ink, #20221c);
+}
+
+.personnel[hidden] {
+  display: none;
+}
+
+.personnel-header {
+  padding: 24px clamp(24px, 6vw, 104px) 18px;
+  border-bottom: 1px solid var(--theme-line, #aaa59a);
+}
+
+.personnel-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.personnel-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.personnel-back:hover {
+  color: var(--theme-accent, #9b7247);
+}
+
+.personnel-back kbd,
+.personnel-search .key {
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 1px 5px;
+  border: 1px solid var(--theme-line, #aaa59a);
+  color: var(--theme-muted, #77756d);
+}
+
+.personnel-legend {
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--theme-muted, #77756d);
+}
+
+.personnel-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.personnel-legend i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--theme-line, #aaa59a);
+}
+
+.personnel-legend [data-legend="online"] i {
+  background: #4f8a5c;
+}
+
+.personnel-legend [data-legend="busy"] i {
+  background: var(--theme-accent, #9b7247);
+}
+
+.personnel-heading {
+  margin-top: 18px;
+}
+
+.personnel-heading > span {
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  color: var(--theme-muted, #77756d);
+}
+
+.personnel-heading h2 {
+  margin: 4px 0 2px;
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.personnel-heading p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--theme-muted, #77756d);
+  font-variant-numeric: tabular-nums;
+}
+
+.personnel-tools {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px clamp(24px, 6vw, 104px);
+  border-bottom: 1px solid var(--theme-line, #aaa59a);
+  flex-wrap: wrap;
+}
+
+.personnel-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 260px;
+  min-width: 200px;
+  padding: 7px 12px;
+  background: var(--theme-field, #dedad1);
+  border: 1px solid var(--theme-line, #aaa59a);
+  color: var(--theme-muted, #77756d);
+}
+
+.personnel-search:focus-within {
+  border-color: var(--theme-accent, #9b7247);
+}
+
+.personnel-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+}
+
+.personnel-search input:focus {
+  outline: none;
+}
+
+.personnel-filters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  max-height: 84px;
+  overflow-y: auto;
+}
+
+.personnel-filters button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 12px;
+  background: none;
+  border: 1px solid var(--theme-line, #aaa59a);
+  color: var(--theme-muted, #77756d);
+  cursor: pointer;
+}
+
+.personnel-filters button:hover {
+  border-color: var(--theme-ink, #20221c);
+  color: var(--theme-ink, #20221c);
+}
+
+.personnel-filters button[aria-pressed="true"] {
+  background: var(--theme-ink, #20221c);
+  border-color: var(--theme-ink, #20221c);
+  color: var(--theme-paper, #e8e5e1);
+}
+
+.personnel-filters button i {
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.62;
+}
+
+.personnel-body {
+  overflow: auto;
+  padding: 0 clamp(24px, 6vw, 104px);
+}
+
+.personnel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.personnel-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 12px 12px 8px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--theme-muted, #77756d);
+  background: var(--theme-paper, #e8e5e1);
+  border-bottom: 1px solid var(--theme-line, #aaa59a);
+  white-space: nowrap;
+}
+
+.personnel-table th.num {
+  text-align: right;
+}
+
+.personnel-row td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--theme-line, #aaa59a);
+  vertical-align: top;
+}
+
+.personnel-row:hover {
+  background: color-mix(in srgb, var(--theme-accent, #9b7247) 9%, transparent);
+}
+
+.personnel-row .id,
+.personnel-row .records {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.personnel-row .id,
+.personnel-row .records,
+.personnel-row .department {
+  color: var(--theme-muted, #77756d);
+  font-size: 13px;
+}
+
+.personnel-row .name strong {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.personnel-row .name small,
+.personnel-row .presence small {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--theme-muted, #77756d);
+}
+
+.personnel-row .presence {
+  white-space: nowrap;
+}
+
+.personnel-row .presence i {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: var(--theme-line, #aaa59a);
+  vertical-align: 1px;
+}
+
+.personnel-row[data-status="online"] .presence i {
+  background: #4f8a5c;
+}
+
+.personnel-row[data-status="busy"] .presence i {
+  background: var(--theme-accent, #9b7247);
+}
+
+.personnel-row[data-status="offline"] {
+  color: var(--theme-muted, #77756d);
+}
+
+.personnel-empty {
+  margin: 40px 0;
+  text-align: center;
+  color: var(--theme-muted, #77756d);
+}
+
+.personnel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px clamp(24px, 6vw, 104px);
+  border-top: 1px solid var(--theme-line, #aaa59a);
+  font-size: 12px;
+  color: var(--theme-muted, #77756d);
+}
+
+#personnel-count {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .personnel-table {
+    font-size: 13px;
+  }
+
+  .personnel-table th:nth-child(4),
+  .personnel-row td:nth-child(4),
+  .personnel-table th:nth-child(6),
+  .personnel-row td:nth-child(6) {
+    display: none;
+  }
+
+  .personnel-filters {
+    max-height: 64px;
+  }
+}
