@@ -1,0 +1,243 @@
+{
+  "account": "kristen.wright",
+  "errors": [],
+  "entryOptions": [
+    {
+      "target": "archive",
+      "label": "档案表"
+    },
+    {
+      "target": "personnel",
+      "label": "人员表"
+    },
+    {
+      "target": "workbench",
+      "label": "工作台"
+    }
+  ],
+  "opened": {
+    "visible": true,
+    "clock": "19:02\n1\n9\n:\n0\n2",
+    "date": "2026年10月4日星期日",
+    "lanes": [
+      "时间日期",
+      "今日事项",
+      "重要日程",
+      "专注计时"
+    ],
+    "laneLabels": [
+      "01时间日期↗",
+      "02今日事项↗",
+      "03重要日程↗",
+      "04专注计时↗"
+    ],
+    "index": "01 / 04",
+    "title": "时间日期",
+    "tasks": [],
+    "taskCount": "",
+    "panelText": "2026YEAR 今年已走过 75.8%",
+    "mediaLane": true,
+    "archiveInert": true,
+    "flipPressed": "true",
+    "overflow": false
+  },
+  "clockVsSystem": {
+    "shown": "19:0219:02",
+    "expected": "19:02",
+    "matches": false
+  },
+  "settingsMarkup": {
+    "modeButtons": 2,
+    "showSwitches": [
+      "clock",
+      "tasks",
+      "module",
+      "navigation",
+      "brand",
+      "footer",
+      "settings"
+    ],
+    "hello": true
+  },
+  "afterQueue": {
+    "visible": true,
+    "clock": "19:03\n1\n9\n:\n0\n3",
+    "date": "2026年10月4日星期日",
+    "lanes": [
+      "时间日期",
+      "今日事项",
+      "重要日程",
+      "专注计时"
+    ],
+    "laneLabels": [
+      "01时间日期↗",
+      "02今日事项↗",
+      "03重要日程↗",
+      "04专注计时↗"
+    ],
+    "index": "01 / 04",
+    "title": "时间日期",
+    "tasks": [
+      {
+        "text": "复核聚焦发生器读数",
+        "done": "false"
+      },
+      {
+        "text": "校核三号评审室排期",
+        "done": "false"
+      }
+    ],
+    "taskCount": "0 / 2",
+    "panelText": "2026YEAR 今年已走过 75.8%",
+    "mediaLane": true,
+    "archiveInert": true,
+    "flipPressed": "true",
+    "overflow": false
+  },
+  "timerRunning": {
+    "visible": true,
+    "clock": "19:03\n1\n9\n:\n0\n3",
+    "date": "2026年10月4日星期日",
+    "lanes": [
+      "时间日期",
+      "今日事项",
+      "重要日程",
+      "专注计时"
+    ],
+    "laneLabels": [
+      "01时间日期↗",
+      "02今日事项↗",
+      "03重要日程↗",
+      "04专注计时↗"
+    ],
+    "index": "04 / 04",
+    "title": "专注计时",
+    "tasks": [
+      {
+        "text": "复核聚焦发生器读数",
+        "done": "true"
+      },
+      {
+        "text": "校核三号评审室排期",
+        "done": "false"
+      }
+    ],
+    "taskCount": "1 / 2",
+    "panelText": "值守 · 进行中 11:59 1 1 : 5 9 暂停 重置 转入间隙 切换页面或重新加载后按实际时间校正。 时长在终端设置中调整。",
+    "timer": "11:59\n1\n1\n:\n5\n9",
+    "mediaLane": true,
+    "archiveInert": true,
+    "flipPressed": "true",
+    "overflow": false
+  },
+  "schedule": {
+    "visible": true,
+    "clock": "19:03\n1\n9\n:\n0\n3",
+    "date": "2026年10月4日星期日",
+    "lanes": [
+      "时间日期",
+      "今日事项",
+      "重要日程",
+      "专注计时"
+    ],
+    "laneLabels": [
+      "01时间日期↗",
+      "02今日事项↗",
+      "03重要日程↗",
+      "04专注计时↗"
+    ],
+    "index": "03 / 04",
+    "title": "重要日程",
+    "tasks": [
+      {
+        "text": "复核聚焦发生器读数",
+        "done": "true"
+      },
+      {
+        "text": "校核三号评审室排期",
+        "done": "false"
+      }
+    ],
+    "taskCount": "1 / 2",
+    "panelText": "聚焦发生器阶段复核 3天后 距离目标 · 2026-10-07 09:30 62 小时 26 分钟后",
+    "mediaLane": true,
+    "archiveInert": true,
+    "flipPressed": "true",
+    "overflow": false
+  },
+  "narrow": {
+    "visible": true,
+    "clock": "19:03\n1\n9\n:\n0\n3",
+    "date": "2026年10月4日星期日",
+    "lanes": [
+      "时间日期",
+      "今日事项",
+      "重要日程",
+      "专注计时"
+    ],
+    "laneLabels": [
+      "01时间日期↗",
+      "02今日事项↗",
+      "03重要日程↗",
+      "04专注计时↗"
+    ],
+    "index": "03 / 04",
+    "title": "重要日程",
+    "tasks": [
+      {
+        "text": "复核聚焦发生器读数",
+        "done": "true"
+      },
+      {
+        "text": "校核三号评审室排期",
+        "done": "false"
+      }
+    ],
+    "taskCount": "1 / 2",
+    "panelText": "聚焦发生器阶段复核 3天后 距离目标 · 2026-10-07 09:30 62 小时 26 分钟后",
+    "mediaLane": true,
+    "archiveInert": true,
+    "flipPressed": "true",
+    "overflow": false
+  },
+  "afterFlip": {
+    "workbenchVisible": false,
+    "flipPressed": "false",
+    "archiveInert": false
+  },
+  "afterReload": {
+    "visible": true,
+    "clock": "19:03\n1\n9\n:\n0\n3",
+    "date": "2026年10月4日星期日",
+    "lanes": [
+      "时间日期",
+      "今日事项",
+      "重要日程",
+      "专注计时"
+    ],
+    "laneLabels": [
+      "01时间日期↗",
+      "02今日事项↗",
+      "03重要日程↗",
+      "04专注计时↗"
+    ],
+    "index": "01 / 04",
+    "title": "时间日期",
+    "tasks": [
+      {
+        "text": "复核聚焦发生器读数",
+        "done": "true"
+      },
+      {
+        "text": "校核三号评审室排期",
+        "done": "false"
+      }
+    ],
+    "taskCount": "1 / 2",
+    "panelText": "2026YEAR 今年已走过 75.8%",
+    "mediaLane": true,
+    "archiveInert": true,
+    "flipPressed": "true",
+    "overflow": false
+  }
+}

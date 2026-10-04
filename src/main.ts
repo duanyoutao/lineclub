@@ -52,7 +52,10 @@ import { isWallpaper, wallpaperHost, wallpaperFrame, type WallpaperProperties } 
 import "./startup.css";
 import "./wallpaper.css";
 import { Workbench } from "./workbench";
+import { WorkbenchSource } from "./workbench-source";
+import type { WorkbenchElement } from "./workbench-visibility";
 let workbench: Workbench | undefined;
+let workbenchSource: WorkbenchSource | undefined;
 import { ArchivePlayground } from "./archive-playground";
 import { ARRAY_OPENING_END, openingShowsDetail } from "./wallpaper-opening";
 import { paintTheme, themeSettingsMarkup } from "./theme-ui";
@@ -81,6 +84,7 @@ $("#stage").innerHTML = `
     <button data-action="personnel" aria-label="查看人员名录" title="人员名录">☰ PERSONNEL <span id="personnel-count">00</span></button>
     <button data-action="saved" aria-label="查看收藏档案" title="收藏档案">＋ SAVED <span id="saved-count">00</span></button>
     <button data-action="profile" aria-label="查看我的终端档案" title="我的">◎ 我的 <span id="profile-count">00</span></button>
+    ${isWallpaper ? "" : '<button data-workbench-flip aria-pressed="false" aria-label="切换桌面工作台" title="桌面工作台">▤ 工作台</button>'}
     <button class="settings-button" data-action="settings" aria-label="系统设置" title="系统设置"><span class="settings-glyph" aria-hidden="true">◷</span><span class="settings-label">设置</span></button>
   </nav>
   <button id="skip" class="skip" data-action="skip">ENTER SYSTEM <span>↗</span></button>
@@ -598,6 +602,17 @@ function leaveBoot() {
 function enterDirectory(target: EntryTarget) {
   if (target === "personnel") {
     openPersonnel();
+    return;
+  }
+  if (target === "workbench") {
+    // The bench is a view over the array rather than an overlay, so the array
+    // keeps its selection and the choice lands on its other face.
+    workbench?.setEnabled(true);
+    setMode("archive");
+    (document.querySelector<HTMLElement>(".wb-nav button:not([hidden])") ??
+      document.querySelector<HTMLElement>("[data-workbench-flip]"))?.focus({
+      preventScroll: true,
+    });
     return;
   }
   $(".read-file").focus({ preventScroll: true });
@@ -1360,6 +1375,9 @@ function completeStartup(silent: boolean, restored?: ResumeMode) {
   // for certain: a fresh sign-in and a resumed tab both land here, and a resumed
   // tab never goes through the gate.
   syncProfileBadge();
+  // The bench reads its queue and switches from the session, so it is handed the
+  // identity at the same meeting point the badge uses.
+  workbenchSource?.setSession(signedIn);
   if (silent) {
     prefs.sound = false;
     prefs.music = false;
@@ -1454,21 +1472,48 @@ if (isWallpaper) {
   apply(wallpaperHost()?.properties ?? {});
   pause();
 }
+// The bench is built for both hosts: the wallpaper feeds it host properties, the
+// web build feeds it its own local source, and both render the same surface.
+workbench = new Workbench($("#stage"), () => {
+  if (ready && mode !== "boot") setMode("archive");
+}, lane => {
+  if (ready && !modal) select(columnMemory[lane]);
+}, !isWallpaper);
+if (!isWallpaper) {
+  workbenchSource = new WorkbenchSource();
+  workbench.setSource(workbenchSource);
+  // Publish once so the bench starts from the stored queue rather than from an
+  // empty properties bag; the identity arrives later, at completeStartup().
+  workbenchSource.publish();
+}
+workbench.setMotion(prefs.motion);
+document.addEventListener("click", event => {
+  const flip = (event.target as Element).closest<HTMLElement>("[data-workbench-flip]");
+  if (flip) {
+    closeModal(() => { workbench!.setEnabled(!workbench!.enabled); });
+    return;
+  }
+  const button = (event.target as Element).closest<HTMLElement>("[data-workbench-mode]");
+  if (button) closeModal(() => { workbench!.setEnabled(button.dataset.workbenchMode === "workbench"); });
+});
+// Editing the queue and the session length happens in the terminal's own
+// settings, so the bench keeps one interaction (click to tick) on its surface.
+document.addEventListener("input", event => {
+  const input = (event.target as Element).closest<HTMLInputElement>("[data-wb-task-input]");
+  if (input) workbenchSource?.setTask(Number(input.dataset.wbTaskInput), input.value);
+});
+document.addEventListener("change", event => {
+  const target = event.target as Element;
+  const box = target.closest<HTMLInputElement>("[data-wb-show]");
+  if (box) workbenchSource?.setVisibility(box.dataset.wbShow as WorkbenchElement, box.checked);
+  const minutes = target.closest<HTMLInputElement>("[data-wb-minutes]");
+  if (minutes) workbenchSource?.setMinutes(minutes.dataset.wbMinutes === "break" ? "break" : "focus", Number(minutes.value));
+});
 if (isWallpaper) {
-  workbench = new Workbench($("#stage"), () => {
-    if (ready && mode !== "boot") setMode("archive");
-  }, lane => {
-    if (ready && !modal) select(columnMemory[lane]);
-  });
-  workbench.setMotion(prefs.motion);
   playground = new ArchivePlayground($("#stage"), () => scene,
     () => ({ enabled: !!workbench?.enabled && mode === "archive" && ready, paused: Boolean(modal) || modalClosing || Boolean(wallpaperHost()?.paused) || document.hidden, reduced: motionIsReduced() }),
     value => { musicSuppressed = value; configureAudio(); }, () => audio.play("tick"));
   wallpaperEffects = new WallpaperEffects($("#stage"), () => scene);
-  document.addEventListener("click", event => {
-    const button = (event.target as Element).closest<HTMLElement>("[data-workbench-mode]");
-    if (button) closeModal(() => { workbench!.setEnabled(button.dataset.workbenchMode === "workbench"); });
-  });
 }
 void start();
 // Deterministic review controls: the running application, never a video surrogate.

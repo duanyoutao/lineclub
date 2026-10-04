@@ -2,12 +2,12 @@ import { escapeHtml } from "./html";
 import { fullMotion, type MotionPreferences } from "./motion-preferences";
 import "./entry-choice.css";
 
-export type EntryTarget = "archive" | "personnel";
+export type EntryTarget = "archive" | "personnel" | "workbench";
 
 /**
- * The two destinations the terminal offers once the opening has finished. It is
+ * The three destinations the terminal offers once the opening has finished. It is
  * a transition surface, not navigation: it owns focus while visible and always
- * resolves to one of the two directories, so the array is never left half-open.
+ * resolves to one of the directories, so the array is never left half-open.
  */
 export class EntryChoice {
   isOpen = false;
@@ -41,6 +41,11 @@ export class EntryChoice {
           <button class="entry-choice-option" data-entry="personnel">
             <span class="entry-choice-index">02</span>
             <span class="entry-choice-body"><strong>人员表</strong><small>PERSONNEL DIRECTORY</small><em>科室与职位 · 查阅权限 · 关联档案</em></span>
+            <span class="entry-choice-mark">→</span>
+          </button>
+          <button class="entry-choice-option" data-entry="workbench">
+            <span class="entry-choice-index">03</span>
+            <span class="entry-choice-body"><strong>工作台</strong><small>DAILY TERMINAL</small><em>本机时钟 · 本日条目 · 值守计时 · 排期</em></span>
             <span class="entry-choice-mark">→</span>
           </button>
         </div>

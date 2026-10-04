@@ -4,7 +4,8 @@ import { escapeHtml } from "./html";
 import { wallpaperHost, type WallpaperProperties } from "./wallpaper";
 import { dayKey, durationText, idleTimer, parseTarget, restoreTimer, timerLeft } from "./workbench-state";
 import "./workbench.css";
-import { defaultWorkbenchVisibility, applyVisibilityProperties, type WorkbenchVisibility, type WorkbenchElement } from "./workbench-visibility";
+import { defaultWorkbenchVisibility, applyVisibilityProperties, workbenchElements, type WorkbenchVisibility, type WorkbenchElement } from "./workbench-visibility";
+import type { WorkbenchSource } from "./workbench-source";
 
 type Media = { status?: { enabled?: boolean }; properties?: { title?: string; artist?: string; albumTitle?: string }; thumbnail?: { thumbnail?: string }; timeline?: { position?: number; duration?: number }; playing?: boolean };
 declare global { interface Window { rhineWallpaperMedia?: Media; } }
@@ -33,7 +34,10 @@ export class Workbench {
   private lastSecond = -1;
   private exitAnimation?: Animation;
   private visibility: WorkbenchVisibility = defaultWorkbenchVisibility();
-  constructor(private stage: HTMLElement, private onMode: () => void, private onLane: (lane: number) => void) {
+  /** Set on the web build: the bench then owns its data instead of reading the
+   *  host's properties, and its settings become editable inside the terminal. */
+  private source?: WorkbenchSource;
+  constructor(private stage: HTMLElement, private onMode: () => void, private onLane: (lane: number) => void, private web = false) {
     try {
       const saved = JSON.parse(localStorage.getItem(key) ?? "null");
       this.timer = restoreTimer(saved?.timer);
@@ -64,6 +68,12 @@ export class Workbench {
     window.addEventListener("resize", () => { if (this.lane === 3) this.renderPanel(); });
     this.apply(wallpaperHost()?.properties ?? {});
   }
+  setSource(source: WorkbenchSource) {
+    this.source = source;
+    this.renderTasks();
+    this.renderPanel();
+    this.syncElements();
+  }
   private text(key: string) { const v = this.props[key]?.value; return typeof v === "string" ? v.trim().slice(0, 240) : ""; }
   private minutes(phase = this.timer.phase) { const n = this.props[phase === "focus" ? "focusminutes" : "breakminutes"]?.value; return typeof n === "number" && Number.isFinite(n) ? Math.max(1, Math.min(phase === "focus" ? 120 : 60, n)) : phase === "focus" ? 25 : 5; }
   private taskId(i: number) { return `${i}:${this.text(`task${i + 1}`)}`; }
@@ -86,6 +96,8 @@ export class Workbench {
     this.enabled = value;
     this.stage.dataset.workbench = String(value);
     document.querySelectorAll<HTMLElement>("[data-workbench-mode]").forEach(button => button.setAttribute("aria-pressed", String((button.dataset.workbenchMode === "workbench") === value)));
+    // The web build's nav entry is a single switch, so it shows the state instead.
+    document.querySelectorAll<HTMLElement>("[data-workbench-flip]").forEach(button => button.setAttribute("aria-pressed", String(value)));
     this.onMode();
     this.syncVisibility();
     this.syncElements();
@@ -126,7 +138,25 @@ export class Workbench {
     this.renderPanel();
   }
   settingsMarkup() {
-    return `<div class="wb-settings"><strong>工作模式</strong><div><button data-workbench-mode="workbench" aria-pressed="${this.enabled}">桌面工作台</button><button data-workbench-mode="archive" aria-pressed="${!this.enabled}">档案展示</button></div><p>事项、日程和计时时长请在 Wallpaper Engine 属性中填写。事项完成状态按天保存，计时进度单独保留。</p><p>工作台元素与设置入口的显示开关位于 Wallpaper Engine 的壁纸属性中。全部关闭后只显示档案阵列；需要恢复时从那里重新打开。隐藏专注内容不会停止计时。</p></div>`;
+    const mode = `<div><button data-workbench-mode="workbench" aria-pressed="${this.enabled}">桌面工作台</button><button data-workbench-mode="archive" aria-pressed="${!this.enabled}">档案展示</button></div>`;
+    if (!this.source) {
+      return `<div class="wb-settings"><strong>工作模式</strong>${mode}<p>事项、日程和计时时长请在 Wallpaper Engine 属性中填写。事项完成状态按天保存，计时进度单独保留。</p><p>工作台元素与设置入口的显示开关位于 Wallpaper Engine 的壁纸属性中。全部关闭后只显示档案阵列；需要恢复时从那里重新打开。隐藏专注内容不会停止计时。</p></div>`;
+    }
+    const { tasks, focus, rest, show } = this.source.state();
+    const field = (label: string, inner: string) => `<label class="wb-field"><span>${label}</span>${inner}</label>`;
+    return `<div class="wb-settings"><strong>工作模式</strong>${mode}<p>条目、时长与显示开关保存在本机，不随账号同步；完成状态每天重置，计时按绝对时间继续。关闭显示不会停止计时。</p>
+      <div class="wb-fields">${tasks
+        .map((task, index) => field(`条目 0${index + 1} / QUEUE`, `<input type="text" maxlength="60" data-wb-task-input="${index}" value="${escapeHtml(task)}" placeholder="登记一条今天的条目"/>`))
+        .join("")}
+        ${field("值守时长 / SESSION", `<input type="number" min="1" max="120" inputmode="numeric" data-wb-minutes="focus" value="${focus}"/><i>分钟</i>`)}
+        ${field("间隙时长 / BREAK", `<input type="number" min="1" max="60" inputmode="numeric" data-wb-minutes="break" value="${rest}"/><i>分钟</i>`)}
+      </div>
+      <strong>显示内容</strong>
+      <div class="wb-switches">${workbenchElements
+        .map(([key, label]) => `<label><div><strong>${label}</strong><span>工作台内的这一块</span></div><input type="checkbox" data-wb-show="${key}" ${show[key] ? "checked" : ""}/><i class="toggle"></i></label>`)
+        .join("")}
+      </div>
+    </div>`;
   }
   private syncElements() {
     const selectors = { clock: ".wb-time", tasks: ".wb-today", module: ".wb-module", navigation: ".wb-nav" } as const;
@@ -134,7 +164,17 @@ export class Workbench {
     const available = capabilityKeys.some((_, i) => this.laneEnabled(i));
     this.root.querySelector<HTMLElement>(".wb-module")!.hidden = !this.visibility.module || !available;
     this.root.querySelector<HTMLElement>(".wb-nav")!.hidden = !this.visibility.navigation || !available;
-    this.root.querySelectorAll<HTMLButtonElement>("[data-wb-lane]").forEach(button => { button.hidden = !this.laneEnabled(+button.dataset.wbLane!); });
+    // The bench drops whatever a host cannot serve (a browser has no system media
+    // session), so the numbering follows what is actually on offer.
+    let offered = 0;
+    this.root.querySelectorAll<HTMLButtonElement>("[data-wb-lane]").forEach(button => {
+      const enabled = this.laneEnabled(+button.dataset.wbLane!);
+      button.hidden = !enabled;
+      if (!enabled) return;
+      offered += 1;
+      const index = button.querySelector("small");
+      if (index) index.textContent = String(offered).padStart(2, "0");
+    });
     this.root.querySelector<HTMLElement>(".wb-overview")!.hidden = !this.visibility.clock && !this.visibility.tasks;
     this.root.dataset.clockVisible = String(this.visibility.clock);
     this.stage.dataset.workbenchBrand = String(!this.enabled || this.visibility.brand);
@@ -153,7 +193,7 @@ export class Workbench {
   private renderTasks() {
     const entries = [0, 1, 2].filter(i => this.text(`task${i + 1}`));
     this.root.querySelector(".wb-task-count")!.textContent = entries.length ? `${entries.filter(i => this.done.includes(this.taskId(i))).length} / ${entries.length}` : "";
-    this.root.querySelector(".wb-tasks")!.innerHTML = entries.length ? entries.map(i => `<button class="wb-task" data-wb-task="${i}" aria-pressed="${this.done.includes(this.taskId(i))}"><span class="wb-check" aria-hidden="true">${this.done.includes(this.taskId(i)) ? "✓" : ""}</span><span>${escapeHtml(this.text(`task${i + 1}`))}</span></button>`).join("") : '<p class="wb-muted">今天想完成什么？<br>在 Wallpaper Engine 属性中填写最多三件事。</p>';
+    this.root.querySelector(".wb-tasks")!.innerHTML = entries.length ? entries.map(i => `<button class="wb-task" data-wb-task="${i}" aria-pressed="${this.done.includes(this.taskId(i))}"><span class="wb-check" aria-hidden="true">${this.done.includes(this.taskId(i)) ? "✓" : ""}</span><span>${escapeHtml(this.text(`task${i + 1}`))}</span></button>`).join("") : this.web ? '<p class="wb-muted">本日还没有登记条目。<br>在终端设置里填写最多三件事。</p>' : '<p class="wb-muted">今天想完成什么？<br>在 Wallpaper Engine 属性中填写最多三件事。</p>';
   }
   private actTimer(action: string) {
     const now = Date.now();
@@ -206,7 +246,7 @@ export class Workbench {
     if (this.lane === 2) {
       const text = this.text("eventdate"), target = parseTarget(text), title = this.text("eventname");
       const delta = target === null ? 0 : target - Date.now();
-      html = !text ? '<p class="wb-empty">留一个值得期待的日子。</p><p class="wb-muted">在 Wallpaper Engine 中填写日程名称与目标日期。</p>' : target === null ? '<p class="wb-empty">目标日期格式不正确</p><p class="wb-muted">请填写 YYYY-MM-DD，或 YYYY-MM-DD HH:mm。</p>' : `<p class="wb-event">${escapeHtml(title || "重要日程")}</p><div class="wb-large">${Math.ceil(Math.abs(delta) / 86400000)}<small>${delta > 0 ? "天后" : "天前"}</small></div><p class="wb-muted">${delta > 0 ? "距离目标" : "已到达目标"} · ${escapeHtml(text)}<br>${Math.floor(Math.abs(delta) / 3600000)} 小时 ${Math.floor(Math.abs(delta) / 60000) % 60} 分钟${delta > 0 ? "后" : "前"}</p>`;
+      html = !text ? `<p class="wb-empty">${this.web ? "本账号目前没有排期。" : "留一个值得期待的日子。"}</p><p class="wb-muted">${this.web ? "排期来自终端编目；登记之后，这里会按本机时间倒数。" : "在 Wallpaper Engine 中填写日程名称与目标日期。"}</p>` : target === null ? '<p class="wb-empty">目标日期格式不正确</p><p class="wb-muted">请填写 YYYY-MM-DD，或 YYYY-MM-DD HH:mm。</p>' : `<p class="wb-event">${escapeHtml(title || "重要日程")}</p><div class="wb-large">${Math.ceil(Math.abs(delta) / 86400000)}<small>${delta > 0 ? "天后" : "天前"}</small></div><p class="wb-muted">${delta > 0 ? "距离目标" : "已到达目标"} · ${escapeHtml(text)}<br>${Math.floor(Math.abs(delta) / 3600000)} 小时 ${Math.floor(Math.abs(delta) / 60000) % 60} 分钟${delta > 0 ? "后" : "前"}</p>`;
     }
     if (this.lane === 3) {
       const media = window.rhineWallpaperMedia ?? {}, p = media.properties, t = media.timeline;
@@ -214,7 +254,7 @@ export class Workbench {
       const safeCover = typeof cover === "string" && /^data:image\/(png|jpeg|webp);base64,[a-z0-9+/=\s]+$/i.test(cover);
       html = media.status?.enabled === false ? '<p class="wb-empty">媒体信息未启用</p><p class="wb-muted">请在 Wallpaper Engine 中启用媒体信息集成。</p>' : !p?.title ? '<p class="wb-empty">此刻，留一点安静。</p><p class="wb-muted">在支持系统媒体信息的播放器中播放音乐，歌曲与封面会显示在这里。</p>' : `<div class="wb-media">${safeCover ? `<img src="${escapeHtml(cover!)}" alt="专辑封面"/>` : '<div class="wb-cover" aria-hidden="true">♫</div>'}<div><small>${media.playing ? "正在播放" : "媒体已暂停或停止"}</small><h3 data-wb-roll>${escapeHtml(p.title)}</h3><p data-wb-roll>${escapeHtml(p.artist || "")}</p></div></div>${t && typeof t.duration === "number" && t.duration > 0 && Number.isFinite(t.duration) && typeof t.position === "number" && Number.isFinite(t.position) ? `<div class="wb-rule"><i style="width:${Math.max(0, Math.min(100, t.position / t.duration * 100))}%"></i></div><p class="wb-muted"><span data-wb-roll>${durationText(t.position * 1000)}</span> / <span data-wb-roll>${durationText(t.duration * 1000)}</span></p>` : ''}`;
     }
-    if (this.lane === 4) html = `<div class="wb-timer-label">${this.timer.phase === "focus" ? "专注" : "休息"} · ${this.timer.status === "done" ? "已结束" : this.timer.status === "running" ? "进行中" : this.timer.status === "paused" ? "已暂停" : "准备开始"}</div><div class="wb-large wb-timer-digits" data-wb-roll>${durationText(this.timer.status === "idle" ? this.minutes() * 60000 : timerLeft(this.timer, Date.now()))}</div><div class="wb-timer-buttons"><button data-wb-timer="toggle">${this.timer.status === "running" ? "暂停" : this.timer.status === "paused" ? "继续" : "开始"}</button><button data-wb-timer="reset">重置</button><button data-wb-timer="phase">${this.timer.phase === "focus" ? "转入休息" : "开始专注"}</button></div><p class="wb-muted">${this.timer.status === "done" ? "这一段时间已完成。准备好后再开始下一段。" : "暂停壁纸或重新加载后按实际时间校正。"}<br>时长在 Wallpaper Engine 中设置。</p>`;
+    if (this.lane === 4) html = `<div class="wb-timer-label">${this.timer.phase === "focus" ? "值守" : "间隙"} · ${this.timer.status === "done" ? "已结束" : this.timer.status === "running" ? "进行中" : this.timer.status === "paused" ? "已暂停" : "准备开始"}</div><div class="wb-large wb-timer-digits" data-wb-roll>${durationText(this.timer.status === "idle" ? this.minutes() * 60000 : timerLeft(this.timer, Date.now()))}</div><div class="wb-timer-buttons"><button data-wb-timer="toggle">${this.timer.status === "running" ? "暂停" : this.timer.status === "paused" ? "继续" : "开始"}</button><button data-wb-timer="reset">重置</button><button data-wb-timer="phase">${this.timer.phase === "focus" ? "转入间隙" : "开始值守"}</button></div><p class="wb-muted">${this.timer.status === "done" ? "这一段时间已完成。准备好后再开始下一段。" : this.web ? "切换页面或重新加载后按实际时间校正。<br>时长在终端设置中调整。" : "暂停壁纸或重新加载后按实际时间校正。<br>时长在 Wallpaper Engine 中设置。"}</p>`;
     patchRollingPanel(this.root.querySelector<HTMLElement>(".wb-content")!, html, this.motion.rollingText);
     this.root.querySelector(".wb-storage")!.textContent = this.storageOK ? "" : "当前无法保存进度，重新加载后可能丢失。";
   }
