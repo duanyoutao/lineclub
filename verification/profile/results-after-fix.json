@@ -1,0 +1,139 @@
+{
+  "account": "kristen.wright",
+  "department": "总辖构件科",
+  "unitInDepartment": [
+    "Rhine Lab"
+  ],
+  "errors": [],
+  "before": {
+    "open": true,
+    "stats": [
+      {
+        "label": "待办 / PENDING",
+        "value": "06",
+        "caption": "共 6 份名下档案"
+      },
+      {
+        "label": "预约 / SCHEDULED",
+        "value": "02",
+        "caption": "首场 10-07 09:30"
+      },
+      {
+        "label": "已读 / READ",
+        "value": "00",
+        "caption": "跨会话累计"
+      },
+      {
+        "label": "同科室 / SECTION",
+        "value": "01",
+        "caption": "总辖构件科"
+      }
+    ],
+    "sectionChips": [
+      "Saria"
+    ],
+    "appointmentCards": 2,
+    "footer": "06 PENDING / 02 SCHEDULED",
+    "badge": "06",
+    "pendingIds": [
+      "X-001",
+      "X-008",
+      "X-013",
+      "X-032",
+      "X-037",
+      "X-039",
+      "X-032",
+      "X-039"
+    ],
+    "overflow": false
+  },
+  "unitsLeaked": [],
+  "narrow": {
+    "open": true,
+    "stats": [
+      {
+        "label": "待办 / PENDING",
+        "value": "06",
+        "caption": "共 6 份名下档案"
+      },
+      {
+        "label": "预约 / SCHEDULED",
+        "value": "02",
+        "caption": "首场 10-07 09:30"
+      },
+      {
+        "label": "已读 / READ",
+        "value": "00",
+        "caption": "跨会话累计"
+      },
+      {
+        "label": "同科室 / SECTION",
+        "value": "01",
+        "caption": "总辖构件科"
+      }
+    ],
+    "sectionChips": [
+      "Saria"
+    ],
+    "appointmentCards": 2,
+    "footer": "06 PENDING / 02 SCHEDULED",
+    "badge": "06",
+    "pendingIds": [
+      "X-001",
+      "X-008",
+      "X-013",
+      "X-032",
+      "X-037",
+      "X-039",
+      "X-032",
+      "X-039"
+    ],
+    "overflow": false
+  },
+  "afterRead": {
+    "mode": "detail",
+    "selected": "X-001",
+    "badge": "05"
+  },
+  "reopened": {
+    "open": true,
+    "stats": [
+      {
+        "label": "待办 / PENDING",
+        "value": "05",
+        "caption": "共 6 份名下档案"
+      },
+      {
+        "label": "预约 / SCHEDULED",
+        "value": "02",
+        "caption": "首场 10-07 09:30"
+      },
+      {
+        "label": "已读 / READ",
+        "value": "01",
+        "caption": "跨会话累计"
+      },
+      {
+        "label": "同科室 / SECTION",
+        "value": "01",
+        "caption": "总辖构件科"
+      }
+    ],
+    "sectionChips": [
+      "Saria"
+    ],
+    "appointmentCards": 2,
+    "footer": "05 PENDING / 02 SCHEDULED",
+    "badge": "05",
+    "pendingIds": [
+      "X-008",
+      "X-013",
+      "X-032",
+      "X-037",
+      "X-039",
+      "X-032",
+      "X-039"
+    ],
+    "overflow": false
+  }
+}

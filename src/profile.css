@@ -1,0 +1,486 @@
+/* The operator's own file. Same surface language as the register and the
+   reading stage: paper, hairlines, tracked caps. Colours come from the live
+   theme variables, so one stylesheet serves both palettes. */
+.profile {
+  position: absolute;
+  inset: 0;
+  /* Above the register (32) and the reading stage (31): it is opened from the
+     nav and never at the same time as either. */
+  z-index: 34;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  overflow: hidden;
+  background: var(--theme-paper, #e8e5e1);
+  color: var(--theme-ink, #20221c);
+}
+
+.profile[hidden] {
+  display: none;
+}
+
+.profile-header {
+  padding: 24px clamp(24px, 6vw, 104px) 18px;
+  border-bottom: 1px solid var(--theme-line, #aaa59a);
+}
+
+.profile-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.profile-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.profile-back:hover {
+  color: var(--theme-accent, #9b7247);
+}
+
+.profile-back kbd {
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 1px 5px;
+  border: 1px solid var(--theme-line, #aaa59a);
+  color: var(--theme-muted, #77756d);
+}
+
+/* The signed-in account, restated where the register puts its legend. */
+.profile-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--theme-muted, #77756d);
+}
+
+.profile-state i {
+  font-style: normal;
+}
+
+.profile-state i:first-child {
+  width: 7px;
+  height: 7px;
+  background: var(--theme-accent, #9b7247);
+}
+
+.profile-heading {
+  margin-top: 18px;
+}
+
+.profile-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  color: var(--theme-muted, #77756d);
+}
+
+.profile-heading h2 {
+  margin: 4px 0 2px;
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.profile-heading h2 small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  color: var(--theme-muted, #77756d);
+}
+
+.profile-sub {
+  margin: 0;
+  font-size: 13px;
+  color: var(--theme-muted, #77756d);
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-sub i,
+.profile-state i {
+  opacity: 0.6;
+}
+
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 0 clamp(24px, 6vw, 104px);
+  border-bottom: 1px solid var(--theme-line, #aaa59a);
+}
+
+.profile-stats > div {
+  padding: 16px 0;
+  border-right: 1px solid var(--theme-line, #aaa59a);
+}
+
+.profile-stats > div:last-child {
+  border-right: 0;
+}
+
+.profile-stats span {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--theme-muted, #77756d);
+}
+
+.profile-stats strong {
+  display: block;
+  margin: 6px 0 2px;
+  font-size: clamp(20px, 2.4vw, 27px);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-stats small {
+  font-size: 11px;
+  color: var(--theme-muted, #77756d);
+}
+
+.profile-body {
+  overflow: auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-content: start;
+  gap: 18px;
+  padding: 24px clamp(24px, 6vw, 104px) 40px;
+}
+
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--theme-line, #aaa59a);
+}
+
+.profile-card.wide {
+  grid-column: 1 / -1;
+}
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--theme-line, #aaa59a);
+}
+
+.card-head span {
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  color: var(--theme-muted, #77756d);
+}
+
+.card-head h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.card-fields {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.card-field {
+  display: grid;
+  gap: 3px;
+}
+
+.card-field dt {
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  color: var(--theme-muted, #77756d);
+}
+
+.card-field dd {
+  margin: 0;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.card-field dd small {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--theme-muted, #77756d);
+}
+
+.card-note {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: var(--theme-muted, #77756d);
+}
+
+.card-sub {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--theme-line, #aaa59a);
+}
+
+.card-sub > span {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  color: var(--theme-muted, #77756d);
+}
+
+.card-sub > span i {
+  font-style: normal;
+  color: var(--theme-ink, #20221c);
+}
+
+.card-sub > p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--theme-muted, #77756d);
+}
+
+.card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.card-chips > span,
+.chip-link {
+  padding: 4px 9px;
+  font: inherit;
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--theme-line, #aaa59a);
+  color: var(--theme-ink, #20221c);
+  background: none;
+}
+
+.chip-link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.chip-link:hover {
+  border-color: var(--theme-accent, #9b7247);
+  color: var(--theme-accent, #9b7247);
+}
+
+.chip-link em {
+  font-style: normal;
+  color: var(--theme-muted, #77756d);
+}
+
+.card-empty {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: var(--theme-muted, #77756d);
+}
+
+/* 待办 and 预约 are lists of things to act on, so they get rows rather than
+   fields. The whole row is the control, the way a register row is. */
+.card-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--theme-line, #aaa59a);
+}
+
+.card-list li {
+  border-bottom: 1px solid var(--theme-line, #aaa59a);
+}
+
+.card-list button {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: 4px 14px;
+  width: 100%;
+  padding: 12px 2px;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.card-list button:hover,
+.card-list button:focus-visible {
+  background: color-mix(in srgb, var(--theme-accent, #9b7247) 6%, transparent);
+}
+
+.card-list button:focus-visible {
+  outline: 1px solid var(--theme-accent, #9b7247);
+  outline-offset: -1px;
+}
+
+.list-id {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--theme-muted, #77756d);
+}
+
+.list-title {
+  font-size: 14px;
+}
+
+.list-meta {
+  font-size: 11.5px;
+  color: var(--theme-muted, #77756d);
+}
+
+.card-list em {
+  font-style: normal;
+  color: var(--theme-muted, #77756d);
+}
+
+.card-list button:hover em {
+  color: var(--theme-accent, #9b7247);
+}
+
+.card-appointment {
+  display: grid;
+  gap: 10px;
+}
+
+/* An account can hold several slots and they stack inside the one 预约 card,
+   so they get a rule between them the way register rows do. */
+.card-appointment + .card-appointment {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--theme-line, #aaa59a);
+}
+
+.appointment-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.appointment-at {
+  font-size: clamp(18px, 2.2vw, 24px);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+.appointment-kind {
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  color: var(--theme-accent, #9b7247);
+}
+
+.card-appointment > strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.appointment-place {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--theme-muted, #77756d);
+}
+
+.profile-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 12px clamp(24px, 6vw, 104px);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--theme-muted, #77756d);
+  border-top: 1px solid var(--theme-line, #aaa59a);
+}
+
+.profile-footer #profile-count {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Narrow and short viewports stack the cards; the stats keep two per row so the
+   four figures stay legible instead of shrinking to single digits. */
+:is([data-layout="compact"], [data-layout="portrait"]) .profile-header {
+  padding: 16px var(--edge, 20px) 14px;
+}
+
+:is([data-layout="compact"], [data-layout="portrait"]) .profile-stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0 var(--edge, 20px);
+}
+
+:is([data-layout="compact"], [data-layout="portrait"]) .profile-stats > div {
+  padding: 12px 0;
+}
+
+:is([data-layout="compact"], [data-layout="portrait"])
+  .profile-stats
+  > div:nth-child(2n) {
+  border-right: 0;
+}
+
+:is([data-layout="compact"], [data-layout="portrait"])
+  .profile-stats
+  > div:nth-child(-n + 2) {
+  border-bottom: 1px solid var(--theme-line, #aaa59a);
+}
+
+:is([data-layout="compact"], [data-layout="portrait"]) .profile-body {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  padding: 18px var(--edge, 20px) 32px;
+}
+
+:is([data-layout="compact"], [data-layout="portrait"]) .card-list button {
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+}
+
+:is([data-layout="compact"], [data-layout="portrait"]) .list-meta {
+  grid-column: 2 / -1;
+}
+
+:is([data-layout="compact"], [data-layout="portrait"]) .profile-footer {
+  padding: 12px var(--edge, 20px);
+}
+
+:is([data-layout="compact"], [data-layout="portrait"]) .profile-back kbd {
+  display: none;
+}
+
+:is([data-layout="compact"], [data-layout="portrait"]) .profile-back {
+  min-height: 44px;
+}
+
+/* No reduced-motion block here on purpose: the panel lives inside #stage, so
+   style.css's `.reduce-motion *` already stops its transitions, and the
+   Web Animations used for opening and closing are skipped in profile.ts when
+   surfaceTransitions is off. Unlike the login gate, this panel can read the
+   stored preference. */

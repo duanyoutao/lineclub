@@ -333,6 +333,149 @@ export async function loadPersonnel(content) {
   );
 }
 
+const appointmentFields = ["title", "kind", "at", "place", "note"];
+// "MM-DD HH:MM", the terminal's own scheduling notation. It is setting-side
+// text and deliberately does not track the real clock, so it is only checked
+// for shape, never for being in the future.
+const slotPattern = /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]) ([01]\d|2[0-3]):[0-5]\d$/;
+
+/** Appointments are the schedule the terminal keeps for one operator. They
+ *  borrow names and file numbers from the other two documents, so the whole
+ *  set is cross-checked rather than validated on its own. */
+export function validateAssignments(assignments, content, personnel, credentials) {
+  const errors = [];
+  if (
+    !assignments ||
+    typeof assignments !== "object" ||
+    Array.isArray(assignments)
+  ) {
+    throw new Error("排期数据必须是 JSON 对象。");
+  }
+  const list = Array.isArray(assignments.appointments)
+    ? assignments.appointments
+    : [];
+  if (!list.length) errors.push("appointments：至少需要一条排期");
+  if (
+    !Array.isArray(assignments.kinds) ||
+    !assignments.kinds.length ||
+    !assignments.kinds.every(isText)
+  ) {
+    errors.push("kinds：必须是非空排期类型数组");
+  }
+  const kinds = new Set(
+    Array.isArray(assignments.kinds) ? assignments.kinds : [],
+  );
+  const recordIds = new Set(
+    (Array.isArray(content?.records) ? content.records : []).map((r) => r?.id),
+  );
+  const people = new Set(
+    (Array.isArray(personnel?.personnel) ? personnel.personnel : []).map(
+      (p) => p?.name,
+    ),
+  );
+  const accounts = new Map(
+    (Array.isArray(credentials) ? credentials : []).map((row) => [
+      row?.account,
+      row,
+    ]),
+  );
+  // An appointment may only point at files the account already owns, so the
+  // panel can always offer the record as a jump target.
+  const ownedBy = new Map(
+    (Array.isArray(personnel?.personnel) ? personnel.personnel : []).map(
+      (p) => [p?.name, new Set(p?.records ?? [])],
+    ),
+  );
+  const seenIds = new Set();
+  const scheduled = new Set();
+  list.forEach((entry, index) => {
+    const label = `appointments[${index}]`;
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      errors.push(`${label}：必须是排期对象`);
+      return;
+    }
+    for (const key of appointmentFields) {
+      if (!isText(entry[key])) errors.push(`${label}.${key}：必须是非空文本`);
+    }
+    const expectedId = `A-${String(index + 1).padStart(3, "0")}`;
+    if (entry.id !== expectedId)
+      errors.push(`${label}.id：应为 ${expectedId}，编号须按顺序保持稳定`);
+    if (seenIds.has(entry.id))
+      errors.push(`${label}.id：重复编号 ${entry.id}`);
+    seenIds.add(entry.id);
+    if (!kinds.has(entry.kind))
+      errors.push(
+        `${label}.kind：未在 kinds 中声明 ${entry.kind}`,
+      );
+    if (isText(entry.at) && !slotPattern.test(entry.at))
+      errors.push(`${label}.at：应为 MM-DD HH:MM，收到 ${entry.at}`);
+    const owningAccount = accounts.get(entry.account);
+    if (!owningAccount) {
+      errors.push(`${label}.account：找不到账号 ${entry.account}`);
+    } else {
+      scheduled.add(entry.account);
+    }
+    if (!Array.isArray(entry.with))
+      errors.push(`${label}.with：必须是姓名数组（无同行人时写 []）`);
+    for (const [position, name] of (entry.with ?? []).entries()) {
+      if (!isText(name)) {
+        errors.push(`${label}.with[${position}]：必须是非空文本`);
+        continue;
+      }
+      if (people.size && !people.has(name))
+        errors.push(`${label}.with[${position}]：人员名录中没有 ${name}`);
+    }
+    if (!Array.isArray(entry.records))
+      errors.push(`${label}.records：必须是档案编号数组（无关联档案时写 []）`);
+    const owned = owningAccount
+      ? ownedBy.get(owningAccount.name) ?? new Set()
+      : new Set();
+    for (const [position, id] of (entry.records ?? []).entries()) {
+      const where = `${label}.records[${position}]`;
+      if (!isText(id)) {
+        errors.push(`${where}：必须是非空文本`);
+        continue;
+      }
+      if (!recordIds.has(id)) {
+        errors.push(`${where}：找不到档案 ${id}`);
+        continue;
+      }
+      if (!owned.has(id))
+        errors.push(
+          `${where}：${owningAccount?.name} 名下没有档案 ${id}，排名不代表授权`,
+        );
+    }
+  });
+  // Every account gets a schedule, so opening 我的 never lands on a blank tab
+  // for reasons the data layer can predict.
+  for (const account of accounts.keys())
+    if (!scheduled.has(account))
+      errors.push(`appointments：账号 ${account} 没有任何排期`);
+  if (errors.length)
+    throw new Error(`排期数据校验失败：\n- ${errors.join("\n- ")}`);
+  return assignments;
+}
+
+export async function loadAssignments(content, personnel, credentials) {
+  return validateAssignments(
+    JSON.parse(
+      await fs.readFile(
+        new URL("../content/assignments.json", import.meta.url),
+        "utf8",
+      ),
+    ),
+    content ?? (await loadContent()),
+    personnel ?? (await loadPersonnel(content)),
+    credentials ??
+      JSON.parse(
+        await fs.readFile(
+          new URL("../content/credentials.json", import.meta.url),
+          "utf8",
+        ),
+      ),
+  );
+}
+
 /** Downloadable files are plain text, so markup is unwrapped and links keep
  *  their target visible. */
 export function plainText(value) {

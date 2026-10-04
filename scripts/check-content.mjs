@@ -4,8 +4,10 @@ import { test } from "node:test";
 import {
   loadContent,
   loadPersonnel,
+  loadAssignments,
   validateContent,
   validatePersonnel,
+  validateAssignments,
   archiveText,
   leadNames,
   plainText,
@@ -327,6 +329,106 @@ for (const [name, mutate, error] of personnelCases) {
     const invalid = structuredClone(personnel);
     mutate(invalid);
     assert.throws(() => validatePersonnel(invalid, content), error);
+  });
+}
+const assignments = await loadAssignments(content, personnel, credentials);
+const personFor = (account) =>
+  personnel.personnel.find(
+    (p) => p.name === credentials.find((c) => c.account === account).name,
+  );
+test("every account keeps a schedule, and only cites files it owns", () => {
+  const scheduled = new Set(assignments.appointments.map((a) => a.account));
+  assert.deepEqual(
+    [...scheduled].sort(),
+    credentials.map((row) => row.account).sort(),
+    "每个账号都需要至少一条排期，否则「我的」会开出空页",
+  );
+  for (const entry of assignments.appointments) {
+    const owner = personFor(entry.account);
+    for (const id of entry.records)
+      assert.ok(
+        owner.records.includes(id),
+        `${entry.id} 引用了 ${owner.name} 名下的 ${id}`,
+      );
+  }
+});
+test("appointment identifiers stay sequential and unique", () => {
+  assignments.appointments.forEach((entry, index) => {
+    assert.equal(entry.id, `A-${String(index + 1).padStart(3, "0")}`);
+  });
+});
+const assignmentCases = [
+  [
+    "an undeclared kind",
+    (a) => {
+      a.appointments[0].kind = "团建";
+    },
+    /未在 kinds 中声明/,
+  ],
+  [
+    "a malformed slot",
+    (a) => {
+      a.appointments[0].at = "2026-10-07 09:30";
+    },
+    /应为 MM-DD HH:MM/,
+  ],
+  [
+    "an account that does not exist",
+    (a) => {
+      a.appointments[0].account = "nobody";
+    },
+    /找不到账号/,
+  ],
+  [
+    "a colleague absent from the directory",
+    (a) => {
+      a.appointments[0].with = ["凭空出现的人"];
+    },
+    /人员名录中没有/,
+  ],
+  [
+    "a file that does not exist",
+    (a) => {
+      a.appointments[0].records = ["X-999"];
+    },
+    /找不到档案/,
+  ],
+  [
+    "a file the account does not own",
+    (a) => {
+      a.appointments[0].records = [content.records.at(-1).id];
+    },
+    /名下没有档案/,
+  ],
+  [
+    "a reordered identifier",
+    (a) => {
+      [a.appointments[0], a.appointments[1]] = [
+        a.appointments[1],
+        a.appointments[0],
+      ];
+    },
+    /A-001/,
+  ],
+  [
+    "an account left without a schedule",
+    (a, source) => {
+      const account = source.credentials.at(-1).account;
+      a.appointments = a.appointments.filter(
+        (entry) => entry.account !== account,
+      );
+    },
+    /没有任何排期/,
+  ],
+];
+for (const [name, mutate, error] of assignmentCases) {
+  test(`rejects appointment ${name}`, () => {
+    const invalid = structuredClone(assignments);
+    mutate(invalid, { credentials });
+    assert.throws(
+      () => validateAssignments(invalid, content, personnel, credentials),
+      error,
+    );
   });
 }
 test("plain-text punctuation stays literal in HTML and downloadable text", () => {

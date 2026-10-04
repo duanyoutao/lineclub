@@ -47,6 +47,7 @@ import {
 } from "./motion-preferences";
 import { LoginGate, sessionFor, type Session } from "./login";
 import { readSessionResume, saveSessionResume, type ResumeMode } from "./session-resume";
+import { markRead } from "./read-history";
 import { isWallpaper, wallpaperHost, wallpaperFrame, type WallpaperProperties } from "./wallpaper";
 import "./startup.css";
 import "./wallpaper.css";
@@ -56,8 +57,10 @@ import { ArchivePlayground } from "./archive-playground";
 import { ARRAY_OPENING_END, openingShowsDetail } from "./wallpaper-opening";
 import { paintTheme, themeSettingsMarkup } from "./theme-ui";
 import { PersonnelOverlay } from "./personnel";
+import { ProfileOverlay, pendingFor } from "./profile";
 import { EntryChoice, type EntryTarget } from "./entry-choice";
 let personnel: PersonnelOverlay | undefined;
+let profile: ProfileOverlay | undefined;
 let entryChoice: EntryChoice | undefined;
 let playground: ArchivePlayground | undefined;
 import { WallpaperEffects } from "./wallpaper-effects";
@@ -77,6 +80,7 @@ $("#stage").innerHTML = `
     <button data-action="search"><span class="nav-glyph">⌕</span> ARCHIVE INDEX <span class="key">/</span></button>
     <button data-action="personnel" aria-label="查看人员名录" title="人员名录">☰ PERSONNEL <span id="personnel-count">00</span></button>
     <button data-action="saved" aria-label="查看收藏档案" title="收藏档案">＋ SAVED <span id="saved-count">00</span></button>
+    <button data-action="profile" aria-label="查看我的终端档案" title="我的">◎ 我的 <span id="profile-count">00</span></button>
     <button class="settings-button" data-action="settings" aria-label="系统设置" title="系统设置"><span class="settings-glyph" aria-hidden="true">◷</span><span class="settings-label">设置</span></button>
   </nav>
   <button id="skip" class="skip" data-action="skip">ENTER SYSTEM <span>↗</span></button>
@@ -305,6 +309,13 @@ function sessionName() {
 }
 // The directory is a fixed roster, so its nav badge never changes.
 $("#personnel-count").textContent = String(directorySize).padStart(2, "0");
+// 我的 counts what is still unread, so its badge does change — after a sign-in
+// identifies the account, and after every opening.
+function syncProfileBadge() {
+  const badge = document.getElementById("profile-count");
+  if (!badge) return;
+  badge.textContent = String(pendingFor(signedIn)).padStart(2, "0");
+}
 let audioPreview = false, audioPreviewRequest = 0;
 function saveSession() {
   if (!started || isWallpaper || reviewEntry) return;
@@ -323,6 +334,10 @@ function recordAccess() {
     id: records[selected].id,
     time: new Date().toLocaleTimeString("en-GB"),
   });
+  // The per-visit log above stays in memory; this is the cross-visit record the
+  // 我的 panel derives 待办 from, and it belongs to the signed-in account.
+  if (signedIn) markRead(signedIn.account, records[selected].id);
+  syncProfileBadge();
 }
 function saveAudioPrefs() {
   try {
@@ -608,6 +623,28 @@ function openPersonnel() {
   audio.setScene("viewer");
   audio.play("page-open");
   personnel.open();
+}
+function openProfile() {
+  profile ??= new ProfileOverlay($("#stage"), () => {
+    audio.setScene(mode);
+    audio.play("page-close");
+    if (!pendingRecord) return;
+    const index = records.findIndex((record) => record.id === pendingRecord);
+    pendingRecord = undefined;
+    if (index < 0) return;
+    select(index);
+    openFile();
+  }, (id) => {
+    pendingRecord = id;
+    profile?.close();
+  });
+  profile.setMotion(prefs.motion);
+  // Handed over on every open: a resumed tab signs in during startup, and the
+  // panel must never show a name the terminal is not currently using.
+  profile.setSession(signedIn);
+  audio.setScene("viewer");
+  audio.play("page-open");
+  profile.open();
 }
 function openFile() {
   if (!ready) return;
@@ -913,6 +950,9 @@ document.addEventListener("click", (e) => {
   }
   if (action === "personnel") {
     openPersonnel();
+  }
+  if (action === "profile") {
+    openProfile();
   }
   if (action === "prev") stepFile(-1);
   if (action === "next") stepFile(1);
@@ -1316,6 +1356,10 @@ async function start() {
 function completeStartup(silent: boolean, restored?: ResumeMode) {
   if (started || !ready) return;
   started = true;
+  // The one place both entry paths meet, so it is where the identity is known
+  // for certain: a fresh sign-in and a resumed tab both land here, and a resumed
+  // tab never goes through the gate.
+  syncProfileBadge();
   if (silent) {
     prefs.sound = false;
     prefs.music = false;
