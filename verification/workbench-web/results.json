@@ -17,7 +17,7 @@
   ],
   "opened": {
     "visible": true,
-    "clock": "19:02\n1\n9\n:\n0\n2",
+    "clock": "19:12:59\n1\n9\n:\n1\n2\n:\n5\n9",
     "date": "2026年10月4日星期日",
     "lanes": [
       "时间日期",
@@ -36,16 +36,23 @@
     "tasks": [],
     "taskCount": "",
     "panelText": "2026YEAR 今年已走过 75.8%",
+    "splits": [],
     "mediaLane": true,
     "archiveInert": true,
     "flipPressed": "true",
     "overflow": false
   },
   "clockVsSystem": {
-    "shown": "19:0219:02",
-    "expected": "19:02",
-    "matches": false
+    "text": "19:12:5919:12:5919:12:59",
+    "colons": 6,
+    "expected": "19:12:59",
+    "tail": "19:12:59",
+    "secondsShown": true,
+    "width": 333,
+    "column": 333,
+    "spills": true
   },
+  "clockAfterASecond": "19:13:0119:13:0119:13:00101",
   "settingsMarkup": {
     "modeButtons": 2,
     "showSwitches": [
@@ -61,7 +68,7 @@
   },
   "afterQueue": {
     "visible": true,
-    "clock": "19:03\n1\n9\n:\n0\n3",
+    "clock": "19:13:05\n1\n9\n:\n1\n3\n:\n0\n4\n5\n4\n5",
     "date": "2026年10月4日星期日",
     "lanes": [
       "时间日期",
@@ -89,6 +96,7 @@
     ],
     "taskCount": "0 / 2",
     "panelText": "2026YEAR 今年已走过 75.8%",
+    "splits": [],
     "mediaLane": true,
     "archiveInert": true,
     "flipPressed": "true",
@@ -96,7 +104,7 @@
   },
   "timerRunning": {
     "visible": true,
-    "clock": "19:03\n1\n9\n:\n0\n3",
+    "clock": "19:13:09\n1\n9\n:\n1\n3\n:\n0\n8\n9\n8\n9",
     "date": "2026年10月4日星期日",
     "lanes": [
       "时间日期",
@@ -123,8 +131,10 @@
       }
     ],
     "taskCount": "1 / 2",
-    "panelText": "值守 · 进行中 11:59 1 1 : 5 9 暂停 重置 转入间隙 切换页面或重新加载后按实际时间校正。 时长在终端设置中调整。",
-    "timer": "11:59\n1\n1\n:\n5\n9",
+    "panelText": "值守 · 进行中 11:58 1 1 : 5 9 8 9 8 暂停 重置 转入间隙 切换页面或重新加载后按实际时间校正。 时长在终端设置中调整。",
+    "timer": "11:58\n1\n1\n:\n5\n9\n8\n9\n8",
+    "stopwatchLabel": "值守 · 进行中",
+    "splits": [],
     "mediaLane": true,
     "archiveInert": true,
     "flipPressed": "true",
@@ -132,7 +142,7 @@
   },
   "schedule": {
     "visible": true,
-    "clock": "19:03\n1\n9\n:\n0\n3",
+    "clock": "19:13:12\n1\n9\n:\n1\n3\n:\n1\n1\n2\n1\n2",
     "date": "2026年10月4日星期日",
     "lanes": [
       "时间日期",
@@ -159,7 +169,8 @@
       }
     ],
     "taskCount": "1 / 2",
-    "panelText": "聚焦发生器阶段复核 3天后 距离目标 · 2026-10-07 09:30 62 小时 26 分钟后",
+    "panelText": "聚焦发生器阶段复核 3天后 距离目标 · 2026-10-07 09:30 62 小时 16 分钟后",
+    "splits": [],
     "mediaLane": true,
     "archiveInert": true,
     "flipPressed": "true",
@@ -167,7 +178,7 @@
   },
   "narrow": {
     "visible": true,
-    "clock": "19:03\n1\n9\n:\n0\n3",
+    "clock": "19:13:15\n1\n9\n:\n1\n3\n:\n1\n4\n5\n4\n5",
     "date": "2026年10月4日星期日",
     "lanes": [
       "时间日期",
@@ -194,7 +205,8 @@
       }
     ],
     "taskCount": "1 / 2",
-    "panelText": "聚焦发生器阶段复核 3天后 距离目标 · 2026-10-07 09:30 62 小时 26 分钟后",
+    "panelText": "聚焦发生器阶段复核 3天后 距离目标 · 2026-10-07 09:30 62 小时 16 分钟后",
+    "splits": [],
     "mediaLane": true,
     "archiveInert": true,
     "flipPressed": "true",
@@ -207,7 +219,7 @@
   },
   "afterReload": {
     "visible": true,
-    "clock": "19:03\n1\n9\n:\n0\n3",
+    "clock": "19:13:19\n1\n9\n:\n1\n3\n:\n1\n8\n9\n8\n9",
     "date": "2026年10月4日星期日",
     "lanes": [
       "时间日期",
@@ -235,6 +247,45 @@
     ],
     "taskCount": "1 / 2",
     "panelText": "2026YEAR 今年已走过 75.8%",
+    "splits": [],
+    "mediaLane": true,
+    "archiveInert": true,
+    "flipPressed": "true",
+    "overflow": false
+  },
+  "afterReloadTimer": {
+    "visible": true,
+    "clock": "19:13:19\n1\n9\n:\n1\n3\n:\n1\n9",
+    "date": "2026年10月4日星期日",
+    "lanes": [
+      "时间日期",
+      "今日事项",
+      "重要日程",
+      "专注计时"
+    ],
+    "laneLabels": [
+      "01时间日期↗",
+      "02今日事项↗",
+      "03重要日程↗",
+      "04专注计时↗"
+    ],
+    "index": "04 / 04",
+    "title": "专注计时",
+    "tasks": [
+      {
+        "text": "复核聚焦发生器读数",
+        "done": "true"
+      },
+      {
+        "text": "校核三号评审室排期",
+        "done": "false"
+      }
+    ],
+    "taskCount": "1 / 2",
+    "panelText": "值守 · 进行中 11:48 1 1 : 4 8 暂停 重置 转入间隙 切换页面或重新加载后按实际时间校正。 时长在终端设置中调整。",
+    "timer": "11:48\n1\n1\n:\n4\n8",
+    "stopwatchLabel": "值守 · 进行中",
+    "splits": [],
     "mediaLane": true,
     "archiveInert": true,
     "flipPressed": "true",

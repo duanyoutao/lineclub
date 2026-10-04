@@ -139,7 +139,9 @@
 - 复用壁纸端的工作台本体（`src/workbench.ts` 等），实现方式是**解除 `if (isWallpaper)` 门禁 + 换数据源**，不重写、不建第二套渲染器。
 - 新增 `src/workbench-source.ts`：把宿主属性的同一袋数据从本机拼出来，广播**同一个 `rhine-wallpaper-properties` 事件**。条目（最多 3 条）、值守/间隙时长、七项显示开关存 `localStorage["rhine-workbench-web-v1"]`（与壁纸端事项语义不同，独立键；`rhine-workbench-v1` 继续只放当天完成状态与计时）。排期取该账号的 `content/assignments.json` 槽位，把 `MM-DD HH:MM` 投影到**下一个该日期**再交给原倒计时模块——设定数据仍不随真实时钟变化，倒数跟着本机时钟走。
 - 入口：开场选择第三项「工作台」，以及顶栏「▤ 工作台」开关；工作台是**阵列上的另一种视图**（阵列保持选中并被 inert），不是浮层。`[data-workbench="true"] .system-nav > button` 的隐藏规则**豁免 `[data-workbench-flip]`**，否则进去就出不来。底部导航编号跟随**实际可用**槽位（浏览器少一格，原写法会跳号 01 02 03 05）。
+- 时钟**读到秒**（`HH:MM:SS`，`en-GB` 24 小时制），取本机时间；数字从 5 位变 8 位，所以 `.wb-clock` 的字号重新定过档（base `clamp(30px,3.7vw,70px)`，≤1000px 与 ≤700px 各一档），以后改动它要连带确认左侧栏没被撑破。
 - 编辑在**终端设置**里（`settingsMarkup()` 的网页分支：三个条目、两个时长、七项开关），工作台表面只有「点一下打勾」一种交互，与壁纸端一致。壁纸端文案与属性来源不变。
+- 秒表那版停在本地分支 `feature/stopwatch-lane`（提交 `146e101`），未合并未推送；捡回它时必须连带 `columnMemory[lane] !== undefined` 的防护，见 verification/WORKBENCH-WEB.md。
 - 不搬：界面边距、HUD 曲面/鼠标追踪、自定义壁纸等宿主实验项。已知缺口与验证见 verification/WORKBENCH-WEB.md。
 
 ## 登录与凭据

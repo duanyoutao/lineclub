@@ -220,7 +220,8 @@ export class Workbench {
     this.lastSecond = Math.floor(now / 1000);
     this.rollDay(); this.settle(now);
     const date = new Date(now);
-    rollText(this.root.querySelector<HTMLElement>(".wb-clock")!, date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }), this.motion.rollingText);
+    // The terminal reads its own machine's clock, to the second.
+    rollText(this.root.querySelector<HTMLElement>(".wb-clock")!, date.toLocaleTimeString("en-GB", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" }), this.motion.rollingText);
     this.root.querySelector(".wb-date")!.textContent = date.toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric", weekday: "long" });
     if (this.lane === 0 || this.lane === 2) this.renderPanel();
     const timer = this.root.querySelector(".wb-timer-digits");

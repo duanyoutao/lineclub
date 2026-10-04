@@ -16,7 +16,9 @@
 [data-workbench="true"] .system-nav > button:not(.settings-button):not([data-workbench-flip]) { display: none; }
 .wb-overview { position: absolute; top: 24%; left: var(--edge); width: min(29%, 400px); }
 .wb-kicker { font-size: 11px; letter-spacing: 1.8px; border-top: 1px solid #aaa59a; padding-top: 12px; display: flex; justify-content: space-between; gap: 12px; }
-.wb-clock { font-size: clamp(52px, 6vw, 112px); line-height: 1.18; font-weight: 300; letter-spacing: -5px; font-variant-numeric: tabular-nums; }
+/* The clock carries seconds, so the numeral is sized for eight characters
+   instead of five and must still fit the overview column at every width. */
+.wb-clock { font-size: clamp(30px, 3.7vw, 70px); line-height: 1.18; font-weight: 300; letter-spacing: -2px; font-variant-numeric: tabular-nums; }
 .wb-date { font-size: 14px; margin-top: 8px; }
 .wb-today { margin-top: 36px; padding: 18px 0; background: none; border-top: 1px solid #aaa59a; pointer-events: auto; }
 .wb-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
@@ -83,18 +85,18 @@
 @media (max-width: 1000px) {
   .wb-overview { top: 20%; width: 35%; }
   .wb-module { top: 22%; width: 45%; padding: 0; }
-  .wb-clock { letter-spacing: -2px; }
+  .wb-clock { font-size: clamp(28px, 4.2vw, 44px); letter-spacing: -1.5px; }
   .wb-today { margin-top: 15px; padding: 12px 0; }
   .wb-nav { bottom: 10%; }
   .wb-nav button { width: 110px; }
 }
 @media (max-height: 650px) and (min-width: 701px) {
-  .wb-overview { top: 22%; }.wb-module { top: 20%; }.wb-clock { font-size: 48px; }.wb-today { margin-top: 12px; }.wb-task { padding: 7px 0; }.wb-title { margin: 12px 0; font-size: 22px; }.wb-large { font-size: 48px; }.wb-nav { bottom: 8%; }.wb-muted { margin-top: 8px; }
+  .wb-overview { top: 22%; }.wb-module { top: 20%; }.wb-clock { font-size: 32px; }.wb-today { margin-top: 12px; }.wb-task { padding: 7px 0; }.wb-title { margin: 12px 0; font-size: 22px; }.wb-large { font-size: 48px; }.wb-nav { bottom: 8%; }.wb-muted { margin-top: 8px; }
 }
 @media (max-width: 700px) {
   .workbench { top: 100px; bottom: 50px; overflow-y: auto; pointer-events: auto; padding: 0 var(--edge); }
   .wb-overview, .wb-module { position: static; width: auto; }.wb-module { margin-top: 20px; }.wb-overview { padding-top: 8px; }
-  .wb-nav { position: static; flex-wrap: wrap; margin-top: 20px; padding-bottom: 16px; justify-content: flex-start; }.wb-nav button { flex: 1 0 27%; }.wb-clock { font-size: 64px; }
+  .wb-nav { position: static; flex-wrap: wrap; margin-top: 20px; padding-bottom: 16px; justify-content: flex-start; }.wb-nav button { flex: 1 0 27%; }.wb-clock { font-size: 38px; letter-spacing: -1px; }
 }
 .wb-media > div:last-child { min-width: 0; flex: 1; }
 .wb-media :is(h3, p) { max-width: 100%; overflow: hidden; }
