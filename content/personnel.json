@@ -421,6 +421,20 @@
         "X-043"
       ],
       "note": "本终端的项目维护者，档案指向公开仓库。"
+    },
+{
+      "id": "P-027",
+      "name": "大炎资料组",
+      "en": "YAN ARCHIVE SECTION",
+      "kind": "unit",
+      "department": "地区资料组",
+      "position": "资料汇编",
+      "status": "on-roll",
+      "clearance": "REFERENCE AREA",
+      "records": [
+        "X-044"
+      ],
+      "note": "负责外部地区资料编目的分组；大炎卷宗由本组汇编并维护。"
     }
   ]
 }

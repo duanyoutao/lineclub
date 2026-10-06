@@ -4,6 +4,9 @@ const surfaces: Record<string, string> = {
   Frosted_Polymer: "#626b70", Ivory_Edges: "#687277", Optical_Diffuser: "#192226",
   Titanium_Fasteners: "#b1b9bb", Index_Inlay: "#c6a36b", Printed_Label: "#303a3e",
   Subsurface_Optics: "#939e9f", Optical_Edges: "#bbc3bc", Carbon_Ink: "#b6bdb8",
+  // The emblem crest on the X-044 document model; the dark-theme anchors match
+  // the stock ivory and titanium so the crest dims like the rest of the box.
+  Emblem_Ivory: "#687277", Emblem_Titanium: "#b1b9bb",
 };
 /** Extend existing optical shaders; one float per instance avoids new meshes or passes. */
 export function themeMaterial(material: THREE.Material, name: string, instanced = false, subduedIndex = { value: 0 }) {

@@ -38,6 +38,18 @@ import { archiveFraming } from "./viewport-layout";
 import { ArchiveDrag, ArchivePlaneMomentum, type DragAxis, type DragProjection, type DragPosition } from "./archive-drag";
 import { assetUrl as publicAsset } from "./asset-url";
 import { createSubstrateDecal, disposeSubstrateDecal, findDiffuserPanel, loadSubstrateTexture } from "./substrate-decal";
+
+// The close-up meshes a per-document variant replaces. The list is the optical
+// groups the variant rebuild script removes; everything else in the cassette is
+// byte-identical between stock and variant (verified per material in
+// verification/YAN-NATION.md).
+const OPTICAL_SURFACES = new Set([
+  "Subsurface_Optics",
+  "Amber_Optical_Inlay",
+  "Optical_Film",
+  "Optical_Film_Edge",
+  "Optical_Edges",
+]);
 import { fullMotion, reducedMotion, type MotionPreferences } from "./motion-preferences";
 import {
   archiveWave,
@@ -80,8 +92,14 @@ export class ArchiveScene {
     this.model.clear();
     this.outgoing = [];
     this.instances = [];
-    this.assemblyTemplate?.then(disposeThreeTree).catch(() => {});
-    this.assemblyTemplate = undefined;
+    for (const template of this.assemblyTemplates.values())
+      template.then(disposeThreeTree).catch(() => {});
+    this.assemblyTemplates.clear();
+    for (const variant of this.variantModels.values())
+      variant.then(disposeThreeTree).catch(() => {});
+    this.variantModels.clear();
+    this.variantGroup = undefined;
+    this.stockOptical = [];
     this.light.shadow.map?.dispose();
     for (const pass of this.composer.passes) pass.dispose();
     this.composer.dispose();
@@ -492,26 +510,49 @@ export class ArchiveScene {
     this.model.add(label);
     this.appearance.prepare(this.model);
     this.appearance.apply(this.model, 0);
+    // The per-document swap (updateAssemblyVariant) hides exactly these meshes
+    // while a variant document is selected; Optical_Edges carries both the
+    // cavity parts and the box mouldings, so the variant supplies its own copy
+    // of the mouldings and the two sets never show at once.
+    this.stockOptical = this.model.children.filter(
+      (mesh): mesh is THREE.Mesh =>
+        mesh instanceof THREE.Mesh &&
+        OPTICAL_SURFACES.has(mesh.userData.surface as string),
+    );
     this.drawLabel(0);
     this.updateSubstrateDecal(0);
+    this.updateAssemblyVariant(0);
     this.scene.add(this.model);
     this.model.position.copy(this.cellPosition(poolCell(this.selectedSlot)));
     this.loaded = true;
   }
 
-  private assemblyTemplate?: Promise<THREE.Group>;
-  async createAssemblyModel() {
-    this.assemblyTemplate ??= new GLTFLoader()
-      .loadAsync(publicAsset("assets/archive-assembly.glb"))
-      .then((gltf) => {
-        gltf.scene.updateMatrixWorld(true);
-        return gltf.scene;
-      })
-      .catch((error) => {
-        this.assemblyTemplate = undefined;
-        throw error;
-      });
-    const template = await this.assemblyTemplate;
+  private assemblyTemplates = new Map<string, Promise<THREE.Group>>();
+  async createAssemblyModel(assembly?: string) {
+    // Per-document variants (X-044 swaps the two optical groups for the emblem
+    // crest) reuse the same six-group contract; the shared asset stays the
+    // default so every other document keeps loading what it loaded before. The
+    // cache is keyed by asset name: opening X-044 after another document must
+    // not reuse the stock template, or the swap would never load.
+    // The record stores the path relative to public/ (same convention as
+    // `substrate`), so it goes straight through publicAsset — prepending
+    // "assets/" here would double it into a 404.
+    const asset = assembly ?? "assets/archive-assembly.glb";
+    this.assemblyTemplates.set(
+      asset,
+      this.assemblyTemplates.get(asset) ??
+        new GLTFLoader()
+          .loadAsync(publicAsset(asset))
+          .then((gltf) => {
+            gltf.scene.updateMatrixWorld(true);
+            return gltf.scene;
+          })
+          .catch((error) => {
+            this.assemblyTemplates.delete(asset);
+            throw error;
+          }),
+    );
+    const template = await this.assemblyTemplates.get(asset)!;
     const model = new THREE.Group();
     const meshes: THREE.Mesh[] = [];
     template.traverse((object) => {
@@ -524,11 +565,24 @@ export class ArchiveScene {
         object.geometry.clone().applyMatrix4(object.matrixWorld),
         object.material,
       );
+      // A multi-material object exports as a group holding one mesh per
+      // primitive; the tag lives on the group. Walk up, or those meshes fall
+      // into the cover group and move with the cover when exploded — this is
+      // exactly what happened to the two-tone emblem crest and, unnoticed, to
+      // the split Titanium_Fasteners screw of the stock asset all along.
+      let owner: THREE.Object3D | null = object;
+      while (owner && owner.userData.assemblyPart === undefined)
+        owner = owner.parent;
       mesh.userData.surface = name;
-      mesh.userData.assemblyPart = object.userData.assemblyPart;
+      mesh.userData.assemblyPart = owner?.userData.assemblyPart;
       model.add(mesh);
       meshes.push(mesh);
     });
+    for (const mesh of meshes)
+      this.appearance.ensure(
+        mesh.userData.surface as string,
+        mesh.material as THREE.MeshPhysicalMaterial,
+      );
     this.appearance.prepare(model);
     this.appearance.apply(model, 1);
     this.appearance.setClarity(model, this.modelClarity());
@@ -769,6 +823,7 @@ export class ArchiveScene {
     this.targetRotation = 0;
     this.drawLabel(index);
     this.updateSubstrateDecal(index);
+    this.updateAssemblyVariant(index);
   }
   private emitPulse(cell: ArchiveCell) {
     this.pulses.push({ ...cell, time: this.clock });
@@ -796,6 +851,116 @@ export class ArchiveScene {
         this.substrateDecal = createSubstrateDecal(panel, texture);
       })
       .catch(() => {});
+  }
+
+  private variantSource?: string;
+  private variantRequest = 0;
+  private variantGroup?: THREE.Group;
+  private variantModels = new Map<string, Promise<THREE.Group>>();
+  private stockOptical: THREE.Mesh[] = [];
+
+  /** Swap the close-up's optical groups for a variant document's crests.
+   *  Mirrors updateSubstrateDecal: ticket-guarded against rapid selection
+   *  changes, model cached per asset, stock meshes only hidden — never
+   *  destroyed — so leaving the variant restores them instantly. */
+  private updateAssemblyVariant(index: number) {
+    // The record names the viewer asset; the close-up asset follows the same
+    // per-document naming, so one field drives both models.
+    const cassetteAsset = records[index]?.assembly?.replace(
+      "archive-assembly-",
+      "archive-cassette-",
+    );
+    const ticket = ++this.variantRequest;
+    if (!cassetteAsset) {
+      this.variantSource = undefined;
+      this.applyVariantSwap(false);
+      return;
+    }
+    if (this.variantSource === cassetteAsset) {
+      this.applyVariantSwap(true);
+      return;
+    }
+    this.variantSource = cassetteAsset;
+    const cached = this.variantModels.get(cassetteAsset);
+    if (cached) {
+      void cached
+        .then((group) => this.installVariant(group, ticket))
+        .catch((error) => this.variantFailed(cassetteAsset, error));
+      return;
+    }
+    const loading = new GLTFLoader()
+      .loadAsync(publicAsset(cassetteAsset))
+      .then((gltf) => this.buildVariantModel(gltf.scene))
+      .catch((error) => {
+        this.variantModels.delete(cassetteAsset);
+        if (ticket === this.variantRequest) this.applyVariantSwap(false);
+        throw error;
+      });
+    this.variantModels.set(cassetteAsset, loading);
+    // The install runs off the frame loop, so a failure here reaches nobody:
+    // without this catch it surfaced as an unhandled rejection while the model
+    // kept a half-installed group. The stock optical groups simply stay.
+    void loading
+      .then((group) => this.installVariant(group, ticket))
+      .catch((error) => this.variantFailed(cassetteAsset, error));
+  }
+
+  private variantFailed(asset: string, error: unknown) {
+    this.variantModels.delete(asset);
+    if (this.variantSource === asset) {
+      this.variantSource = undefined;
+      this.applyVariantSwap(false);
+    }
+    console.warn(`archive variant unavailable: ${asset}`, error);
+  }
+
+  private buildVariantModel(scene: THREE.Group): THREE.Group {
+    scene.updateMatrixWorld(true);
+    const group = new THREE.Group();
+    group.name = "assembly-variant";
+    const surfaces = new Set(["Optical_Edges", "Emblem_Ivory", "Emblem_Titanium"]);
+    const pending: THREE.Mesh[] = [];
+    scene.traverse((object) => {
+      if (!(object instanceof THREE.Mesh)) return;
+      const name = (object.material as THREE.Material).name.replace(/\.\d+$/, "");
+      if (!surfaces.has(name)) return;
+      const mesh = new THREE.Mesh(
+        object.geometry.clone().applyMatrix4(object.matrixWorld),
+        object.material,
+      );
+      mesh.userData.surface = name;
+      pending.push(mesh);
+    });
+    // Register first so prepare() picks up real materials instead of the
+    // printed-canvas fallback, then bind appearance shaders on a temporary
+    // group so the already-bound stock meshes are not processed a second time.
+    for (const mesh of pending)
+      this.appearance.ensure(
+        mesh.userData.surface as string,
+        mesh.material as THREE.MeshPhysicalMaterial,
+      );
+    const shell = new THREE.Group();
+    for (const mesh of pending) shell.add(mesh);
+    this.appearance.prepare(shell);
+    for (const mesh of [...shell.children]) group.add(mesh);
+    return group;
+  }
+
+  private installVariant(group: THREE.Group, ticket: number) {
+    if (ticket !== this.variantRequest || !this.loaded) return;
+    if (this.variantGroup) this.model.remove(this.variantGroup);
+    this.variantGroup = group;
+    this.model.add(group);
+    this.applyVariantSwap(true);
+    // The per-frame apply/clarity/theme loops cover the new meshes from here on;
+    // prime them once so the first frame already matches the current state.
+    this.appearance.apply(this.model, ease(this.lift.value / 0.4));
+    this.appearance.setClarity(this.model, this.modelClarity());
+  }
+
+  private applyVariantSwap(showVariant: boolean) {
+    for (const mesh of this.stockOptical) mesh.visible = !showVariant;
+    if (this.variantGroup) this.variantGroup.visible = showVariant;
   }
   private drawLabel(index: number) {
     if (!this.labelTexture) return;

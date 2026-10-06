@@ -18,6 +18,9 @@ export interface ArchiveRecord {
   sections?: ReaderSection[];
   /** Optional per-document artwork for the information substrate, under public/. */
   substrate?: string;
+  /** Optional per-document 360° viewer asset, a path under public/ replacing
+   *  the shared assets/archive-assembly.glb for this record only. */
+  assembly?: string;
 }
 
 export const records: ArchiveRecord[] = content.records;

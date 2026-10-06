@@ -115,6 +115,32 @@ assert.ok(
   vertexError < 1e-5,
   `Regrouping must retain assembled geometry within float32 tolerance: ${vertexError}`,
 );
+// The per-document variant behind X-044 keeps the six-group contract but swaps
+// the two optical groups for the emblem crest, so the vertex comparison above
+// does not apply to it. What must hold: same six groups, and the crest surfaces
+// present so the viewer can theme them like every other part.
+const yanScene = await load("archive-assembly-yan.glb");
+for (const node of yanScene.children)
+  assert.ok(
+    node.userData.assemblyPart,
+    `Yan variant node ${node.name} must carry assemblyPart`,
+  );
+assert.deepEqual(
+  [...new Set(yanScene.children.map((node) => node.userData.assemblyPart))].sort(),
+  expectedParts,
+  "The yan variant must expose the same six physical groups",
+);
+// A multi-material mesh exports as a node holding several primitive children,
+// so collect surfaces through a traversal rather than reading the top level.
+const yanSurfaces = new Set();
+yanScene.traverse((mesh) => {
+  if (mesh.isMesh) yanSurfaces.add(mesh.material.name.replace(/\.\d+$/, ""));
+});
+for (const crest of ["Emblem_Ivory", "Emblem_Titanium"])
+  assert.ok(
+    yanSurfaces.has(crest),
+    `The yan variant must carry the emblem crest surface ${crest}`,
+  );
 const height = new THREE.Box3()
   .setFromObject(assembly)
   .getSize(new THREE.Vector3()).y;
@@ -139,6 +165,8 @@ console.log(
       vertexError,
       modelHeight: height,
       reassembly: spread.value,
+      yanParts: [...new Set(yanScene.children.map((n) => n.userData.assemblyPart))],
+      yanSurfaces: [...yanSurfaces],
       checks: "passed",
     },
     null,

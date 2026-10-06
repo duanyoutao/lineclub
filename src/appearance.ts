@@ -6,6 +6,24 @@ import { themeMaterial } from "./theme-material";
 type Surface = THREE.MeshPhysicalMaterial;
 type Palette = { high: Surface; low?: Surface };
 
+/**
+ * Visit the meshes a pass cares about.
+ *
+ * The stock model holds meshes directly, but a per-document variant is added as
+ * a group: a two-material object (the emblem's face and wall) exports as a group
+ * holding one mesh per primitive. Treating every child as a mesh dereferenced a
+ * group's own `material` — undefined — and threw inside the per-frame pass, which
+ * left the opening screen half-way and froze every animation until a reload.
+ */
+function eachMesh(group: THREE.Group, visit: (mesh: THREE.Mesh) => void) {
+  for (const child of group.children) {
+    if (child instanceof THREE.Mesh) visit(child);
+    else if (child instanceof THREE.Group)
+      for (const inner of child.children)
+        if (inner instanceof THREE.Mesh) visit(inner);
+  }
+}
+
 // The array and selected file share geometry. Morph their surface properties
 // on one mesh so transparent shells never overlap during a quality change.
 export class CardAppearance {
@@ -19,14 +37,21 @@ export class CardAppearance {
     this.palettes.set(name, { high, low });
   }
 
+  /** Register a surface only when no palette exists for it yet. Per-document
+   *  document models may carry materials the stock cassette never had — the
+   *  emblem crest on X-044 — and without this they would fall into the
+   *  printed-canvas path in prepare() instead of keeping their own finish. */
+  ensure(name: string, material: Surface) {
+    if (!this.palettes.has(name)) this.register(name, material);
+  }
+
   prepare(group: THREE.Group) {
-    for (const child of group.children) {
-      const mesh = child as THREE.Mesh;
+    eachMesh(group, (mesh) => {
       const name = mesh.userData.surface as string;
       const palette = this.palettes.get(name);
       if (!palette) {
         mesh.userData.themeAmount = themeMaterial(mesh.material as THREE.Material, "Printed_Canvas");
-        continue;
+        return;
       }
       const mat = palette.high.clone();
       const amount = { value: 0 };
@@ -87,7 +112,7 @@ export class CardAppearance {
         `archive-surface-clarity-${name}-${Boolean(palette.low)}`;
       mesh.userData.subduedIndex = { value: 0 };
       mesh.userData.themeAmount = themeMaterial(mat, name, false, mesh.userData.subduedIndex);
-    }
+    });
   }
 
   setClarity(group: THREE.Group, value: number) {
@@ -135,17 +160,16 @@ export class CardAppearance {
   }
 
   apply(group: THREE.Group, value: number) {
-    for (const child of group.children) {
-      const mesh = child as THREE.Mesh;
+    eachMesh(group, (mesh) => {
       const palette = this.palettes.get(mesh.userData.surface);
       if (!palette) {
         // The printed canvas belongs to this file, including returning copies.
         (mesh.material as THREE.MeshBasicMaterial).opacity = value;
-        continue;
+        return;
       }
       mesh.userData.appearance.value = value;
       const { high, low } = palette;
-      if (!low) continue;
+      if (!low) return;
       const mat = mesh.material as Surface;
       mat.color.copy(low.color).lerp(high.color, value);
       if (
@@ -179,15 +203,14 @@ export class CardAppearance {
       // Keep the same transmission shader/pass throughout the transition.
       if (high.transmission > 0)
         mat.transmission = Math.max(0.000001, mat.transmission);
-    }
+    });
   }
 
   dispose(group: THREE.Group) {
-    for (const child of group.children) {
-      const mesh = child as THREE.Mesh;
+    eachMesh(group, (mesh) => {
       const mat = mesh.material as THREE.MeshBasicMaterial;
       if (!mesh.userData.surface) mat.map?.dispose();
       mat.dispose();
-    }
+    });
   }
 }

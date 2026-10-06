@@ -988,7 +988,7 @@ document.addEventListener("click", (e) => {
     viewer.open(
       records[selected].id,
       records[selected].title,
-      () => activeScene.createAssemblyModel(),
+      () => activeScene.createAssemblyModel(records[selected].assembly),
       !motionActive("viewerNavigation"),
       records[selected].substrate,
     );

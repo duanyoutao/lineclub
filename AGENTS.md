@@ -340,3 +340,24 @@ WE 画质下拉增加「自定义」，仅此选择且超级模式关闭时显�
 
 - 改为每条描边只保留朝外的一个印刷面，整张印刷面并入同一平面后做一次精确自并集：既没有穿透的侧壁，也没有同面重叠的折边。轮廓与位置不变，材质仍双面可读。见 verification/COVER-MARK.md。
 - 本机 Steam 版 Blender 5.2 位于 `E:\SteamLibrary\steamapps\common\Blender\blender.exe`（与产出这批资产的导出器同版本），已按 `art/build_archive.py` + `art/build_assembly.py` 重导两个 GLB 与 `.blend`；几何由 `scripts/check-cover-mark.mjs` 固定（穿透 0 对、同面重叠 0、轮廓面积差 0.15% 以内）。
+
+## 莱茵生命徽记资产（2026-10-05）
+
+- 用户提供一张参考标志图（已归档 `reference/emblem-reference.webp`），要求建成三维模型并保持项目审美。
+- 流程：参考图 → 轮廓追踪与简化（26 个回路 / 310 顶点，数据存 `art/emblem-outline.json`）→ `art/build_emblem.py` 建面并挤出 → `art/setup_emblem_studio.py` 设审阅渲染 → 源工程 `art/emblem.blend`，成图 `art/emblem-studio.png`。
+- 徽记立于 XZ 平面、正面朝 -Y（Blender 惯例的前方向）；建在 XY 平面会让正视相机只看到一条边。
+- 侧壁金属色刻意比项目标准钛色（.58/.60/.61）更深：正视时侧壁是唯一区分相邻尖刺的东西，必须读作轮廓线而不是融进象牙色正面。
+- 审阅相机比 `setup_studio.py` 更接近正视。archive 是高物体、大俯角才好看；扁平徽记被大俯角一压就糊成一片。灯光能量也降到 archive 的三分之一左右，否则近白的象牙色正面直接过曝。
+- 轮廓追踪脚本依赖 numpy 2.x：`np.cross` 已不接受二维向量，二维叉积需手写。
+
+## 大炎档案与逐文档模型（2026-10-05）
+
+- 用户要求按顺序新建介绍明日方舟世界观中大炎的档案（X-044，含六章正文），并把这份档案的文档模型中的「折射环组」「光学核心」两组换成上一节的徽记模型。
+- 逐文档模型沿用 `substrate` 的先例：`data.ts` 加可选 `assembly` 字段，X-044 声明 `assets/archive-assembly-yan.glb`；`scene.ts` 的模板缓存必须按资产名分键，否则先打开的其它档案会占住缓存、变体永远不加载。字段存相对 public/ 的完整路径并直通 `publicAsset`——曾因再拼一层 `assets/` 变成 404，浏览器实测才暴露；链路验证脚本必须取真实源码的拼接行为，不能按实现者的理解复刻一遍。
+- 变体脚本 `art/build_yan_assembly.py` 在 `build_assembly.py` 的打标与合并两步之间插入：删除两组光学部件，改放两枚徽记（大 1.58 / 小 0.87，落在原两处光学腔圆心），其余四组与共享资产字节一致。两枚徽记沿用象牙正面 + 深钛侧壁的既定配色。
+- 变体材质（`Emblem_Ivory` / `Emblem_Titanium`）共享 cassette 里没有，需经 `appearance.ensure()` 注册，否则 `prepare()` 把它们退化成印刷画布路径；`theme-material.ts` 的 surfaces 表同步补暗色锚点。
+- 新增人员/档案会触发跨文件校验链：`lead` 名字必须在名录中 → 名录新增人员必须重跑 `export:credentials` → 每个账号至少一条排期。X-044 配套 P-027「大炎资料组」与 A-038 排期。
+- 拆解审阅图用顶视：正视会被磨砂盖板糊住全部内层，斜侧视只能看到徽记侧壁，只有顶视能同时呈现六层分离与徽记正面（徽记平躺在 XZ 平面）。
+- 双材质对象（如徽记的正面+侧壁）导出为「组+多网格」，`assemblyPart` 在组上——查看器扁平化时必须沿父链找回标记，否则该部件被默认归入盖板组、拆解时跟盖板走。共享资产的拆分螺丝一直带着这个隐性 bug。
+- 详情特写模型（cassette）是按材质合并的全局共享单体；逐文档外观交换照 `updateSubstrateDecal` 的模式：stock 光学面只 hidden 不销毁，变体面挂到同一模型下，离开变体档案立即还原。变体的构建脚本必须逐材质对比共享资产，确认「删的只是光学件、留的顶点数一致」。
+- 删 Blender 场景对象别按 `type=="MESH"` 过滤——`channel()` 造的是 CURVE，后段才转 mesh；名字前缀足够特异时直接按名删。
